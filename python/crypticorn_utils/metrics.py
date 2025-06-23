@@ -1,14 +1,6 @@
 # metrics/registry.py
 from prometheus_client import CollectorRegistry, Counter, Histogram
-import importlib.metadata
-from importlib.metadata import PackageNotFoundError
-
-try:
-    crypticorn_version = importlib.metadata.distribution("crypticorn").version
-    parts = crypticorn_version.split(".")
-    has_migrated = parts[0] >= "2" and parts[1] > "18"
-except PackageNotFoundError:
-    has_migrated = False
+from crypticorn_utils._migration import has_migrated
 
 registry = CollectorRegistry()
 

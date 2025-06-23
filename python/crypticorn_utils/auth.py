@@ -3,7 +3,7 @@ from typing import Union
 
 from crypticorn.auth import AuthClient, Configuration, Verify200Response
 from crypticorn.auth.client.exceptions import ApiException
-from crypticorn_utils.enums import Scope, ApiVersion, BaseUrl, Service
+from crypticorn_utils.enums import Scope, BaseUrl
 from crypticorn_utils.exceptions import ApiError, ExceptionContent, HTTPException
 from fastapi import Depends, Query
 from fastapi.security import (
@@ -54,7 +54,7 @@ class AuthHandler:
         self,
         base_url: BaseUrl = BaseUrl.PROD,
     ):
-        self.url = f"{base_url}/{ApiVersion.V1}/{Service.AUTH}"
+        self.url = f"{base_url}/v1/auth"
         self.client = AuthClient(Configuration(host=self.url), is_sync=False)
 
     async def _verify_api_key(self, api_key: str) -> Verify200Response:

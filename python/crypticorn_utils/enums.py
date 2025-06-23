@@ -178,14 +178,3 @@ class ApiVersion(StrEnum):
     """Versions to use for the microservice APIs."""
 
     V1 = "v1"
-
-
-class Service(ValidateEnumMixin, StrEnum):
-    """The microservices available to connect to through the API"""
-
-    HIVE = "hive"
-    KLINES = "klines"
-    PAY = "pay"
-    TRADE = "trade"
-    AUTH = "auth"
-    METRICS = "metrics"

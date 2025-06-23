@@ -21,6 +21,22 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v0.1.0-rc.1 (2025-06-23)
+
+### Documentation
+
+- Add changelog
+  ([`788f1f6`](https://github.com/crypticorn-ai/util-libraries/commit/788f1f670a8a50251401ebd1fc9ab7d2ca855a8d))
+
+- Update Readme
+  ([`d2b52cf`](https://github.com/crypticorn-ai/util-libraries/commit/d2b52cfe48de7a8b248ceefbc3bc7007ad21ea72))
+
+### Features
+
+- Initial release
+  ([`4da5fe3`](https://github.com/crypticorn-ai/util-libraries/commit/4da5fe3d33abd31b3b35462e93052db0cde077c2))
+
+
 ## Unreleased
 
 ### Documentation

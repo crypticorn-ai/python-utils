@@ -173,8 +173,3 @@ class BaseUrl(StrEnum):
         elif env == ApiEnv.DOCKER:
             return cls.DOCKER
 
-
-class ApiVersion(StrEnum):
-    """Versions to use for the microservice APIs."""
-
-    V1 = "v1"

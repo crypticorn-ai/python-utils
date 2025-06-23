@@ -20,3 +20,13 @@ This module serves as a central place for providing utilities for our python bac
 # Changelog
 
 <!-- changelog-insertion -->
+
+## Unreleased
+
+### Documentation
+
+- Add changelog
+  ([`788f1f6`](https://github.com/crypticorn-ai/util-libraries/commit/788f1f670a8a50251401ebd1fc9ab7d2ca855a8d))
+
+- Update Readme
+  ([`d2b52cf`](https://github.com/crypticorn-ai/util-libraries/commit/d2b52cfe48de7a8b248ceefbc3bc7007ad21ea72))

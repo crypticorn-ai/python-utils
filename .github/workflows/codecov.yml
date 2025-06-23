@@ -1,0 +1,72 @@
+---
+# https://github.com/marketplace/actions/pytest-coverage-comment
+name: Test and Coverage
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - python/**
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+env:
+  API_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Check-out repository
+        uses: actions/checkout@v4
+
+      - name: Generate .env
+        run: ./python/scripts/merge-env.sh
+
+      - name: Install package
+        run: pip install -e python[test,dev]
+
+      - name: Package build test
+        run: |
+          cd python
+          python -m build --wheel --sdist
+      - name: Import verification
+        run: |
+          cd python
+          python -c "import crypticorn_utils; import importlib.metadata; print(f'Package version: {importlib.metadata.distribution(\"crypticorn_utils\").version}')"
+
+      - name: Test with pytest
+        run: pytest python/tests/ --cov=crypticorn_utils --cov-branch --cov-report=xml --cov-report=term-missing:skip-covered
+
+      # - name: Use Codecov to track coverage
+      #   uses: codecov/codecov-action@v2
+      #   with:
+      #     files: ./coverage.xml
+
+      - name: Pytest coverage comment
+        if: ${{ matrix.python-version == '3.11' }} # current docker python backend version
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Coverage Report ${{ matrix.python-version }}
+          pytest-xml-coverage-path: ./coverage.xml
+          report-only-changed-files: true
+          hide-report: true

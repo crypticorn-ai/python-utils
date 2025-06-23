@@ -20,3 +20,24 @@ This module serves as a central place for providing utilities for our python bac
 # Changelog
 
 <!-- changelog-insertion -->
+
+## v0.0.0 (2025-06-23)
+
+### Documentation
+
+- Add changelog
+  ([`788f1f6`](https://github.com/crypticorn-ai/server-utilties/commit/788f1f670a8a50251401ebd1fc9ab7d2ca855a8d))
+
+- Update Readme
+  ([`d2b52cf`](https://github.com/crypticorn-ai/server-utilties/commit/d2b52cfe48de7a8b248ceefbc3bc7007ad21ea72))
+
+
+## Unreleased
+
+### Documentation
+
+- Add changelog
+  ([`788f1f6`](https://github.com/crypticorn-ai/server-utilties/commit/788f1f670a8a50251401ebd1fc9ab7d2ca855a8d))
+
+- Update Readme
+  ([`d2b52cf`](https://github.com/crypticorn-ai/server-utilties/commit/d2b52cfe48de7a8b248ceefbc3bc7007ad21ea72))

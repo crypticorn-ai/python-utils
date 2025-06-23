@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate .env
-        run: ./python/scripts/merge-env.sh
+        run: ./scripts/merge-env.sh
 
       - name: Install package
         run: pip install -e python[test,dev]

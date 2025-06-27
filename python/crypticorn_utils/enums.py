@@ -7,7 +7,6 @@ except ImportError:
 
 import warnings
 
-from crypticorn_utils.mixins import ValidateEnumMixin
 from crypticorn_utils.warnings import CrypticornDeprecatedSince215
 
 
@@ -103,7 +102,7 @@ class Scope(StrEnum):
         ]
 
 
-class Exchange(ValidateEnumMixin, StrEnum):
+class Exchange(StrEnum):
     """All exchanges used in the crypticorn ecosystem. Refer to the APIs for support for a specific usecase (data, trading, etc.)."""
 
     KUCOIN = "kucoin"
@@ -116,7 +115,7 @@ class Exchange(ValidateEnumMixin, StrEnum):
     BITSTAMP = "bitstamp"
 
 
-class InternalExchange(ValidateEnumMixin, StrEnum):
+class InternalExchange(StrEnum):
     """All exchanges we are using, including public (Exchange)"""
 
     KUCOIN = "kucoin"
@@ -135,7 +134,7 @@ class InternalExchange(ValidateEnumMixin, StrEnum):
         return super().__getattr__(name)
 
 
-class MarketType(ValidateEnumMixin, StrEnum):
+class MarketType(StrEnum):
     """
     Market types
     """

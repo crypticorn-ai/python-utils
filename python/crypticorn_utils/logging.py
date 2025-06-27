@@ -38,17 +38,6 @@ class LogLevel(ValidateEnumMixin, StrEnum):
         else:
             return C.RESET
 
-    @staticmethod
-    def get_level(level: "LogLevel") -> int:
-        """Get the integer value from a log level name."""
-        return logging._nameToLevel.get(level, logging.INFO)
-
-    @staticmethod
-    def get_name(level: int) -> "LogLevel":
-        """Get the level name from the integer value of a log level."""
-        return LogLevel(logging._levelToName.get(level, "INFO"))
-
-
 _LOGFORMAT = (
     f"{C.CYAN_BOLD}%(asctime)s{C.RESET} - "
     f"{C.GREEN_BOLD}%(name)s{C.RESET} - "

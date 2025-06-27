@@ -21,6 +21,9 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v0.1.0 (2025-06-27)
+
+
 ## v0.1.0-rc.1 (2025-06-23)
 
 ### Documentation

@@ -1,7 +1,6 @@
 import pytest
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBasicCredentials
 from crypticorn_utils.auth import AuthHandler
-from crypticorn_utils.enums import Scope
 from crypticorn_utils.exceptions import HTTPException
 from tests.envs import (
     VALID_JWT,
@@ -11,13 +10,10 @@ from tests.envs import (
     EXPIRED_API_KEY,
     ONE_SCOPE_API_KEY,
     ONE_SCOPE_API_KEY_SCOPE,
+    PURCHASEABLE_SCOPES,
+    ADMIN_SCOPES,
+    INTERNAL_SCOPES,
 )
-
-
-# ASSERT SCOPE
-PURCHASEABLE_SCOPES = Scope.purchaseable_scopes()
-ADMIN_SCOPES = Scope.admin_scopes()
-INTERNAL_SCOPES = Scope.internal_scopes()
 
 # Debug
 UPDATE_SCOPES = "you probably need to bring the scopes in both the api client and the auth service in sync"
@@ -335,11 +331,11 @@ async def test_combined_auth_scope_validation_with_insufficient_scopes(
     from fastapi.security import SecurityScopes
 
     with pytest.raises(HTTPException) as e:
-        # Try to access with a token that has READ_TRADE_BOTS scope but require admin scope
+        # Try to access with a token that has read:trade:bots scope but require admin scope
         await auth_handler.combined_auth(
             bearer=None,
             api_key=ONE_SCOPE_API_KEY,
-            sec=SecurityScopes(scopes=[Scope.READ_ADMIN]),
+            sec=SecurityScopes(scopes=["read:admin"]),
         )
     assert e.value.status_code == 403
     assert e.value.detail.get("code") == 'insufficient_scopes'

@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from crypticorn_utils.enums import BaseUrl, Scope
+from crypticorn_utils.enums import BaseUrl
 from crypticorn_utils.utils import gen_random_id
 from crypticorn import AsyncClient
 from crypticorn.auth import CreateApiKeyRequest
@@ -12,8 +12,29 @@ import datetime
 load_dotenv()
 
 
+# ASSERT SCOPE
+PURCHASEABLE_SCOPES = [
+    "read:predictions",
+    "read:metrics:marketcap",
+    "read:metrics:indicators",
+    "read:metrics:exchanges",
+    "read:metrics:tokens",
+    "read:metrics:markets",
+    "read:klines",
+    "read:sentiment",
+    "read:dex:signals",
+]
+ADMIN_SCOPES = [
+    "write:trade:strategies",
+    "write:pay:products",
+    "write:pay:coupons",
+    "write:admin",
+    "read:admin",
+]
+INTERNAL_SCOPES = ["write:trade:actions"]
+
 async def generate_valid_jwt(
-    user_id: str, scopes: list[Scope] = [], is_admin=False, expires_at: int = None
+    user_id: str, scopes: list[str] = [], is_admin=False, expires_at: int = None
 ):
     now = int(time.time())
     payload = {
@@ -31,7 +52,7 @@ async def generate_valid_jwt(
 
 
 async def generate_api_key(
-    user_id: str, scopes: list[Scope] = [], expires_at: datetime.datetime = None
+    user_id: str, scopes: list[str] = [], expires_at: datetime.datetime = None
 ):
     async with AsyncClient(
         base_url=BaseUrl.from_env(API_ENV),
@@ -72,17 +93,17 @@ EXPIRED_JWT = asyncio.run(
 )
 VALID_JWT = asyncio.run(
     generate_valid_jwt(user_id="user-without-read-predictions")
-)  # dummy user since the USER_ID has access to the predictions ($300+)
+)  # dummy user since the USER_ID has access to the predictions (Máté's account)
 VALID_PREDICTION_JWT = asyncio.run(
-    generate_valid_jwt(user_id=USER_ID, scopes=Scope.purchaseable_scopes())
+    generate_valid_jwt(user_id=USER_ID, scopes=PURCHASEABLE_SCOPES)
 )
 VALID_ADMIN_JWT = asyncio.run(
     generate_valid_jwt(
-        user_id=USER_ID, scopes=Scope.purchaseable_scopes(), is_admin=True
+        user_id=USER_ID, scopes=PURCHASEABLE_SCOPES, is_admin=True
     )
 )
 # API KEY
-ONE_SCOPE_API_KEY_SCOPE = Scope.READ_TRADE_BOTS
+ONE_SCOPE_API_KEY_SCOPE = "read:trade:bots"
 ONE_SCOPE_API_KEY = asyncio.run(
     generate_api_key(
         user_id=USER_ID,

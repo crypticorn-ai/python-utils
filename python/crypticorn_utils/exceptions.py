@@ -1,9 +1,10 @@
+from enum import Enum
 import logging
-from typing import Any, Callable, Optional, TypedDict, Union
+from typing import Any, Callable, Optional, Self, TypedDict, Union
 
 from crypticorn_utils.errors import (
-    ApiErrorLevel,
-    ApiErrorType,
+    ErrorLevel,
+    ErrorType,
 )
 from fastapi import FastAPI, HTTPException, WebSocketException
 from fastapi import HTTPException as FastAPIHTTPException
@@ -23,8 +24,8 @@ TError = TypedDict(
     "TError",
     {
         "identifier": str,
-        "type": ApiErrorType,
-        "level": ApiErrorLevel,
+        "type": ErrorType,
+        "level": ErrorLevel,
         "http_code": int,
         "websocket_code": int,
     }
@@ -42,8 +43,8 @@ class ExceptionDetail(BaseModel):
 
     message: Optional[str] = Field(None, description="An additional error message")
     code: str = Field(..., description="The unique error code")
-    type: ApiErrorType = Field(..., description="The type of error")
-    level: ApiErrorLevel = Field(..., description="The level of the error")
+    type: ErrorType = Field(..., description="The type of error")
+    level: ErrorLevel = Field(..., description="The level of the error")
     status_code: int = Field(..., description="The HTTP status code")
     details: Any = Field(None, description="Additional details about the error")
 
@@ -58,7 +59,7 @@ class ExceptionHandler:
     Example for the client code implementation:
 
     ```python
-    from crypticorn_utils import ExceptionHandler, ApiErrorType, ApiErrorLevel, TError
+    from crypticorn_utils import ExceptionHandler, BaseError, ApiError
 
     handler = ExceptionHandler(callback=ApiError.from_identifier)
     handler.register_exception_handlers(app)
@@ -68,47 +69,16 @@ class ExceptionHandler:
         raise handler.build_exception(ApiErrorIdentifier.UNKNOWN_ERROR)
     
     class ApiErrorIdentifier(StrEnum):
-        UNKNOWN_ERROR = "unknown_error"
+        ...
         
-    # Must implement the TError interface.
-    class ApiError(Enum):
-
-        UNKNOWN_ERROR = (
-            ApiErrorIdentifier.UNKNOWN_ERROR,
-            ApiErrorType.SERVER_ERROR,
-            ApiErrorLevel.ERROR,
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            status.WS_1011_INTERNAL_ERROR,
-        )
-        @property
-        def identifier(self) -> str:
-            return self.value[0]
-
-        @property
-        def type(self) -> ApiErrorType:
-            return self.value[1]
-
-        @property
-        def level(self) -> ApiErrorLevel:
-            return self.value[2]
-
-        @property
-        def http_code(self) -> int:
-            return self.value[3]
-
-        @property
-        def websocket_code(self) -> int:
-            return self.value[4]
-
-        @classmethod
-        def from_identifier(cls, identifier: str) -> Self:
-            return next(error for error in cls if error.identifier == identifier)
+    class ApiError(BaseError):
+        ...
     ```
     """
     
     def __init__(
         self, 
-        callback: Callable[[str], TError],
+        callback: Callable[[str], "BaseError"],
         type: Optional[ExceptionType] = ExceptionType.HTTP,
     ):
         """
@@ -117,7 +87,7 @@ class ExceptionHandler:
         """
         self.callback = callback
         self.type = type
-
+    
     def _http_exception(self, content: ExceptionDetail, headers: Optional[dict[str, str]] = None) -> HTTPException:
         return HTTPException(
             detail=content.model_dump(mode="json"),
@@ -161,7 +131,7 @@ class ExceptionHandler:
 
     async def _general_handler(request: Request, exc: Exception) -> JSONResponse:
         """Default exception handler for all exceptions."""
-        body = ExceptionDetail(message=str(exc), code='unknown_error', type=ApiErrorType.SERVER_ERROR, level=ApiErrorLevel.ERROR, status_code=500)
+        body = ExceptionDetail(message=str(exc), code='unknown_error', type=ErrorType.SERVER_ERROR, level=ErrorLevel.ERROR, status_code=500)
         res = JSONResponse(
             status_code=body.status_code,
             content=body.model_dump(mode="json"),
@@ -175,7 +145,7 @@ class ExceptionHandler:
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
         """Exception handler for all request validation errors."""
-        body = ExceptionDetail(message=str(exc), code='invalid_data_request', type=ApiErrorType.USER_ERROR, level=ApiErrorLevel.ERROR, status_code=400)
+        body = ExceptionDetail(message=str(exc), code='invalid_data_request', type=ErrorType.USER_ERROR, level=ErrorLevel.ERROR, status_code=400)
         res = JSONResponse(
             status_code=body.status_code,
             content=body.model_dump(mode="json"),
@@ -189,7 +159,7 @@ class ExceptionHandler:
         request: Request, exc: ResponseValidationError
     ) -> JSONResponse:
         """Exception handler for all response validation errors."""
-        body = ExceptionDetail(message=str(exc), code='invalid_data_response', type=ApiErrorType.USER_ERROR, level=ApiErrorLevel.ERROR, status_code=400)
+        body = ExceptionDetail(message=str(exc), code='invalid_data_response', type=ErrorType.USER_ERROR, level=ErrorLevel.ERROR, status_code=400)
         res = JSONResponse(
             status_code=body.status_code,
             content=body.model_dump(mode="json"),
@@ -219,3 +189,74 @@ class ExceptionHandler:
         app.add_exception_handler(FastAPIHTTPException, self._http_handler)
         app.add_exception_handler(RequestValidationError, self._request_validation_handler)
         app.add_exception_handler(ResponseValidationError, self._response_validation_handler)
+
+class BaseError(Enum):
+    """Base API error for the API."""
+
+    @property
+    def identifier(self) -> str:
+        return self.value[0]
+
+    @property
+    def type(self) -> ErrorType:
+        return self.value[1]
+
+    @property
+    def level(self) -> ErrorLevel:
+        return self.value[2]
+
+    @property
+    def http_code(self) -> int:
+        return self.value[3]
+
+    @property
+    def websocket_code(self) -> int:
+        return self.value[4]
+
+    @classmethod
+    def from_identifier(cls, identifier: str) -> Self:
+        return next(error for error in cls if error.identifier == identifier)
+
+## Since enums don't support inheritance, you can copy these values to your own enum.
+
+# UNKNOWN_ERROR = "unknown_error"
+# INVALID_DATA_REQUEST = "invalid_data"
+# INVALID_DATA_RESPONSE = "invalid_data_response"
+# OBJECT_ALREADY_EXISTS = "object_already_exists"
+# OBJECT_NOT_FOUND = "object_not_found"
+
+# UNKNOWN_ERROR = (
+#     ErrorCodes.UNKNOWN_ERROR,
+#     ErrorType.SERVER_ERROR,
+#     ErrorLevel.ERROR,
+#     status.HTTP_500_INTERNAL_SERVER_ERROR,
+#     status.WS_1011_INTERNAL_ERROR,
+# )
+# INVALID_DATA_REQUEST = (
+#     ErrorCodes.INVALID_DATA_REQUEST,
+#     ErrorType.USER_ERROR,
+#     ErrorLevel.ERROR,
+#     status.HTTP_422_UNPROCESSABLE_ENTITY,
+#     status.WS_1007_INVALID_FRAME_PAYLOAD_DATA,
+# )
+# INVALID_DATA_RESPONSE = (
+#     ErrorCodes.INVALID_DATA_RESPONSE,
+#     ErrorType.SERVER_ERROR,
+#     ErrorLevel.ERROR,
+#     status.HTTP_422_UNPROCESSABLE_ENTITY,
+#     status.WS_1007_INVALID_FRAME_PAYLOAD_DATA,
+# )
+# OBJECT_ALREADY_EXISTS = (
+#     ErrorCodes.OBJECT_ALREADY_EXISTS,
+#     ErrorType.USER_ERROR,
+#     ErrorLevel.ERROR,
+#     status.HTTP_409_CONFLICT,
+#     status.WS_1008_POLICY_VIOLATION,
+# )
+# OBJECT_NOT_FOUND = (
+#     ErrorCodes.OBJECT_NOT_FOUND,
+#     ErrorType.USER_ERROR,
+#     ErrorLevel.ERROR,
+#     status.HTTP_404_NOT_FOUND,
+#     status.WS_1008_POLICY_VIOLATION,
+# )

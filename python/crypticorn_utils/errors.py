@@ -6,7 +6,7 @@ except ImportError:
     from strenum import StrEnum
 
 
-class ApiErrorType(StrEnum):
+class ErrorType(StrEnum):
     """Type of the API error."""
 
     USER_ERROR = "user error"
@@ -19,7 +19,7 @@ class ApiErrorType(StrEnum):
     """error that does not need to be handled or does not affect the program or is a placeholder."""
 
 
-class ApiErrorLevel(StrEnum):
+class ErrorLevel(StrEnum):
     """Level of the API error."""
 
     ERROR = "error"

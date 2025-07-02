@@ -21,6 +21,17 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v0.1.1-rc.1 (2025-07-02)
+
+### Bug Fixes
+
+- Assign correct status code to invalid coupon
+  ([`e4068ac`](https://github.com/crypticorn-ai/util-libraries/commit/e4068ac5a739bac69313b18bc3f4c208d024d06d))
+
+- Make read coupons scope public
+  ([`6f5f213`](https://github.com/crypticorn-ai/util-libraries/commit/6f5f213a53cf7a51c0f9a5bb19c927b5348255a9))
+
+
 ## v0.1.0 (2025-06-27)
 
 

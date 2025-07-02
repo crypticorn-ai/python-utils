@@ -866,6 +866,10 @@ class StatusCodeMapper:
             status.HTTP_400_BAD_REQUEST,
             status.WS_1008_POLICY_VIOLATION,
         ),
+        ApiError.COUPON_INVALID: (
+            status.HTTP_400_BAD_REQUEST,
+            status.WS_1008_POLICY_VIOLATION,
+        ),
         # Success cases
         ApiError.SUCCESS: (status.HTTP_200_OK, status.WS_1000_NORMAL_CLOSURE),
         ApiError.BOT_STOPPING_COMPLETED: (
@@ -892,10 +896,6 @@ class StatusCodeMapper:
         ApiError.FAILED_OPEN_ORDER: (
             status.HTTP_200_OK,
             status.WS_1008_POLICY_VIOLATION,
-        ),
-        ApiError.COUPON_INVALID: (
-            status.HTTP_200_OK,
-            status.WS_1000_NORMAL_CLOSURE,
         ),
         # Miscellaneous
         ApiError.OBJECT_LOCKED: (

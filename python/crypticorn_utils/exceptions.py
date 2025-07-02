@@ -1,14 +1,11 @@
-import json
 import logging
-from typing import Any, Optional
+from typing import Any, Callable, Optional, TypedDict, Union
 
 from crypticorn_utils.errors import (
-    ApiError,
-    ApiErrorIdentifier,
     ApiErrorLevel,
     ApiErrorType,
 )
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, WebSocketException
 from fastapi import HTTPException as FastAPIHTTPException
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
@@ -22,8 +19,18 @@ except ImportError:
 
 _logger = logging.getLogger("crypticorn")
 
+TError = TypedDict(
+    "TError",
+    {
+        "identifier": str,
+        "type": ApiErrorType,
+        "level": ApiErrorLevel,
+        "http_code": int,
+        "websocket_code": int,
+    }
+)
 
-class _ExceptionType(StrEnum):
+class ExceptionType(StrEnum):
     """The protocol the exception is called from"""
 
     HTTP = "http"
@@ -34,150 +41,181 @@ class ExceptionDetail(BaseModel):
     """Exception details returned to the client."""
 
     message: Optional[str] = Field(None, description="An additional error message")
-    code: ApiErrorIdentifier = Field(..., description="The unique error code")
+    code: str = Field(..., description="The unique error code")
     type: ApiErrorType = Field(..., description="The type of error")
     level: ApiErrorLevel = Field(..., description="The level of the error")
     status_code: int = Field(..., description="The HTTP status code")
     details: Any = Field(None, description="Additional details about the error")
 
+    
+class ExceptionHandler:
+    """This class is used to handle errors and exceptions. It is used to build exceptions and raise them.
 
-class ExceptionContent(BaseModel):
-    """Exception content used when raising an exception."""
+    - Register the exception handlers to the FastAPI app.
+    - Configure the instance with a callback to get the error object from the error identifier.
+    - Build exceptions from error codes defined in the client code.
 
-    error: ApiError = Field(..., description="The unique error code")
-    message: Optional[str] = Field(None, description="An additional error message")
-    details: Any = Field(None, description="Additional details about the error")
+    Example for the client code implementation:
 
-    def enrich(
-        self, _type: Optional[_ExceptionType] = _ExceptionType.HTTP
-    ) -> ExceptionDetail:
-        return ExceptionDetail(
-            message=self.message,
-            code=self.error.identifier,
-            type=self.error.type,
-            level=self.error.level,
-            status_code=(
-                self.error.http_code
-                if _type == _ExceptionType.HTTP
-                else self.error.websocket_code
-            ),
-            details=self.details,
+    ```python
+    from crypticorn_utils import ExceptionHandler, ApiErrorType, ApiErrorLevel, TError
+
+    handler = ExceptionHandler(callback=ApiError.from_identifier)
+    handler.register_exception_handlers(app)
+
+    @app.get("/")
+    def get_root():
+        raise handler.build_exception(ApiErrorIdentifier.UNKNOWN_ERROR)
+    
+    class ApiErrorIdentifier(StrEnum):
+        UNKNOWN_ERROR = "unknown_error"
+        
+    # Must implement the TError interface.
+    class ApiError(Enum):
+
+        UNKNOWN_ERROR = (
+            ApiErrorIdentifier.UNKNOWN_ERROR,
+            ApiErrorType.SERVER_ERROR,
+            ApiErrorLevel.ERROR,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status.WS_1011_INTERNAL_ERROR,
         )
+        @property
+        def identifier(self) -> str:
+            return self.value[0]
 
+        @property
+        def type(self) -> ApiErrorType:
+            return self.value[1]
 
-class HTTPException(FastAPIHTTPException):
-    """A custom HTTP exception wrapper around FastAPI's HTTPException.
-    It allows for a more structured way to handle errors, with a message and an error code. The status code is being derived from the detail's error.
-        The ApiError class is the source of truth. If the error is not yet implemented, there are fallbacks in place.
+        @property
+        def level(self) -> ApiErrorLevel:
+            return self.value[2]
+
+        @property
+        def http_code(self) -> int:
+            return self.value[3]
+
+        @property
+        def websocket_code(self) -> int:
+            return self.value[4]
+
+        @classmethod
+        def from_identifier(cls, identifier: str) -> Self:
+            return next(error for error in cls if error.identifier == identifier)
+    ```
     """
-
+    
     def __init__(
-        self,
-        content: ExceptionContent,
-        headers: Optional[dict[str, str]] = None,
-        _type: Optional[_ExceptionType] = _ExceptionType.HTTP,
+        self, 
+        callback: Callable[[str], TError],
+        type: Optional[ExceptionType] = ExceptionType.HTTP,
     ):
-        self.content = content
-        self.headers = headers
-        assert isinstance(content, ExceptionContent)
-        body = content.enrich(_type)
-        super().__init__(
-            status_code=body.status_code,
-            detail=body.model_dump(mode="json"),
+        """
+        :param callback: The callback to use to get the error object from the error identifier.
+        :param type: The type of exception to raise. Defaults to HTTP.
+        """
+        self.callback = callback
+        self.type = type
+
+    def _http_exception(self, content: ExceptionDetail, headers: Optional[dict[str, str]] = None) -> HTTPException:
+        return HTTPException(
+            detail=content.model_dump(mode="json"),
             headers=headers,
+            status_code=content.status_code,
         )
-
-
-class WebSocketException(HTTPException):
-    """A WebSocketException is to be used for WebSocket connections. It is a wrapper around the HTTPException class to maintain the same structure, but using a different status code.
-    To be used in the same way as the HTTPException.
-    """
-
-    def __init__(
-        self, content: ExceptionContent, headers: Optional[dict[str, str]] = None
-    ):
-        super().__init__(content, headers, _type=_ExceptionType.WEBSOCKET)
-
-    @classmethod
-    def from_http_exception(cls, http_exception: HTTPException):
-        """Helper method to convert an HTTPException to a WebSocketException."""
+    
+    def _websocket_exception(self, content: ExceptionDetail) -> WebSocketException:
         return WebSocketException(
-            content=http_exception.content,
-            headers=http_exception.headers,
+            reason=content.model_dump(mode="json"),
+            code=content.status_code,
         )
+    
+    def build_exception(
+        self,
+        code: str,
+        message: Optional[str] = None,
+        headers: Optional[dict[str, str]] = None,
+        details: Any = None,
+    ) -> Union[HTTPException, WebSocketException]:
+        """Build an exception, without raising it.
+        :param code: The error code to raise.
+        :param message: The message to include in the error.
+        :param headers: The headers to include in the error.
+        :param details: The details to include in the error.
+
+        :return: The exception to raise, either an HTTPException or a WebSocketException.
+
+        ```python
+        @app.get("/")
+        def get_root():
+            raise handler.build_exception(ApiErrorIdentifier.UNKNOWN_ERROR)
+        ```
+        """
+        error = self.callback(code)
+        content = ExceptionDetail(message=message, code=error.identifier, type=error.type, level=error.level, status_code=error.http_code, details=details)
+        if self.type == ExceptionType.HTTP:
+            return self._http_exception(content, headers)
+        elif self.type == ExceptionType.WEBSOCKET:
+            return self._websocket_exception(content)
+
+    async def _general_handler(request: Request, exc: Exception) -> JSONResponse:
+        """Default exception handler for all exceptions."""
+        body = ExceptionDetail(message=str(exc), code='unknown_error', type=ApiErrorType.SERVER_ERROR, level=ApiErrorLevel.ERROR, status_code=500)
+        res = JSONResponse(
+            status_code=body.status_code,
+            content=body.model_dump(mode="json"),
+            headers=None,
+        )
+        _logger.error(f"General error: {str(exc)}")
+        return res
 
 
-async def general_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Default exception handler for all exceptions."""
-    body = ExceptionContent(message=str(exc), error=ApiError.UNKNOWN_ERROR)
-    http_exc = HTTPException(content=body)
-    res = JSONResponse(
-        status_code=http_exc.status_code,
-        content=http_exc.detail,
-        headers=http_exc.headers,
-    )
-    _logger.error(f"General error: {json.loads(res.__dict__.get('body'))}")
-    return res
+    async def _request_validation_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        """Exception handler for all request validation errors."""
+        body = ExceptionDetail(message=str(exc), code='invalid_data_request', type=ApiErrorType.USER_ERROR, level=ApiErrorLevel.ERROR, status_code=400)
+        res = JSONResponse(
+            status_code=body.status_code,
+            content=body.model_dump(mode="json"),
+            headers=None,
+        )
+        _logger.error(f"Request validation error: {str(exc)}")
+        return res
 
 
-async def request_validation_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """Exception handler for all request validation errors."""
-    body = ExceptionContent(message=str(exc), error=ApiError.INVALID_DATA_REQUEST)
-    http_exc = HTTPException(content=body)
-    res = JSONResponse(
-        status_code=http_exc.status_code,
-        content=http_exc.detail,
-        headers=http_exc.headers,
-    )
-    _logger.error(f"Request validation error: {json.loads(res.__dict__.get('body'))}")
-    return res
+    async def _response_validation_handler(
+        request: Request, exc: ResponseValidationError
+    ) -> JSONResponse:
+        """Exception handler for all response validation errors."""
+        body = ExceptionDetail(message=str(exc), code='invalid_data_response', type=ApiErrorType.USER_ERROR, level=ApiErrorLevel.ERROR, status_code=400)
+        res = JSONResponse(
+            status_code=body.status_code,
+            content=body.model_dump(mode="json"),
+            headers=None,
+        )
+        _logger.error(f"Response validation error: {str(exc)}")
+        return res
 
 
-async def response_validation_handler(
-    request: Request, exc: ResponseValidationError
-) -> JSONResponse:
-    """Exception handler for all response validation errors."""
-    body = ExceptionContent(message=str(exc), error=ApiError.INVALID_DATA_RESPONSE)
-    http_exc = HTTPException(content=body)
-    res = JSONResponse(
-        status_code=http_exc.status_code,
-        content=http_exc.detail,
-        headers=http_exc.headers,
-    )
-    _logger.error(f"Response validation error: {json.loads(res.__dict__.get('body'))}")
-    return res
+    async def _http_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        """Exception handler for HTTPExceptions. It unwraps the HTTPException and returns the detail in a flat JSON response."""
+        res = JSONResponse(
+            status_code=exc.status_code, content=exc.detail, headers=exc.headers
+        )
+        _logger.error(f"HTTP error: {str(exc)}")
+        return res
 
 
-async def http_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    """Exception handler for HTTPExceptions. It unwraps the HTTPException and returns the detail in a flat JSON response."""
-    res = JSONResponse(
-        status_code=exc.status_code, content=exc.detail, headers=exc.headers
-    )
-    _logger.error(f"HTTP error: {json.loads(res.__dict__.get('body'))}")
-    return res
+    def register_exception_handlers(self, app: FastAPI):
+        """Utility to register serveral exception handlers in one go. Catches Exception, HTTPException and Data Validation errors, logs them and responds with a unified json body.
 
-
-def register_exception_handlers(app: FastAPI):
-    """Utility to register serveral exception handlers in one go. Catches Exception, HTTPException and Data Validation errors, logs them and responds with a unified json body."""
-    app.add_exception_handler(Exception, general_handler)
-    app.add_exception_handler(FastAPIHTTPException, http_handler)
-    app.add_exception_handler(RequestValidationError, request_validation_handler)
-    app.add_exception_handler(ResponseValidationError, response_validation_handler)
-
-
-exception_response = {
-    "default": {"model": ExceptionDetail, "description": "Error response"}
-}
-
-
-class CrypticornException(Exception):
-    """A custom exception class for Crypticorn."""
-
-    def __init__(self, error: ApiError, message: str = None):
-        self.message = message
-        self.error = error
-
-    def __str__(self):
-        return f"{self.error.identifier}: {self.message}"
+        ```python
+        handler.register_exception_handlers(app)
+        ```
+        """
+        app.add_exception_handler(Exception, self._general_handler)
+        app.add_exception_handler(FastAPIHTTPException, self._http_handler)
+        app.add_exception_handler(RequestValidationError, self._request_validation_handler)
+        app.add_exception_handler(ResponseValidationError, self._response_validation_handler)

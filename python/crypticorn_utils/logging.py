@@ -7,7 +7,6 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 from crypticorn_utils.ansi_colors import AnsiColors as C
-from crypticorn_utils.mixins import ValidateEnumMixin
 
 try:
     from enum import StrEnum
@@ -15,7 +14,7 @@ except ImportError:
     from strenum import StrEnum
 
 
-class LogLevel(ValidateEnumMixin, StrEnum):
+class LogLevel(StrEnum):
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"

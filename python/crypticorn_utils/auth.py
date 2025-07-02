@@ -4,7 +4,7 @@ from typing import Union
 from crypticorn.auth import AuthClient, Configuration, Verify200Response
 from crypticorn.auth.client.exceptions import ApiException
 from crypticorn_utils.enums import Scope, BaseUrl
-from crypticorn_utils.exceptions import ApiError, ExceptionContent, HTTPException
+from crypticorn_utils.exceptions import ExceptionContent, HTTPException
 from fastapi import Depends, Query
 from fastapi.security import (
     APIKeyHeader,
@@ -88,7 +88,7 @@ class AuthHandler:
         if not set(api_scopes).issubset(user_scopes):
             raise HTTPException(
                 content=ExceptionContent(
-                    error=ApiError.INSUFFICIENT_SCOPES,
+                    error='insufficient_scopes',
                     message="Insufficient scopes to access this resource (required: "
                     + ", ".join(api_scopes)
                     + ")",
@@ -119,17 +119,17 @@ class AuthHandler:
             # Unfortunately, we cannot share the error messages defined in python/crypticorn/common/errors.py with the typescript client
             message = await self._extract_message(e)
             if message == "Invalid API key":
-                error = ApiError.INVALID_API_KEY
+                error = 'invalid_api_key'
             elif message == "API key expired":
-                error = ApiError.EXPIRED_API_KEY
+                error = 'expired_api_key'
             elif message == "jwt expired":
-                error = ApiError.EXPIRED_BEARER
+                error = 'expired_bearer'
             elif message == "Invalid basic authentication credentials":
-                error = ApiError.INVALID_BASIC_AUTH
+                error = 'invalid_basic_auth'
             else:
                 message = "Invalid bearer token"
                 error = (
-                    ApiError.INVALID_BEARER
+                    'invalid_bearer'
                 )  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
             return HTTPException(
                 content=ExceptionContent(
@@ -142,7 +142,7 @@ class AuthHandler:
         else:
             return HTTPException(
                 content=ExceptionContent(
-                    error=ApiError.UNKNOWN_ERROR,
+                    error='unknown_error',
                     message=str(e),
                 ),
             )
@@ -164,7 +164,7 @@ class AuthHandler:
         except HTTPException as e:
             raise HTTPException(
                 content=ExceptionContent(
-                    error=ApiError.from_json(e.detail),
+                    error=e.detail.get("code"),
                     message=e.detail.get("message"),
                 ),
                 headers={AUTHENTICATE_HEADER: APIKEY_AUTH_SCHEME},
@@ -190,7 +190,7 @@ class AuthHandler:
         except HTTPException as e:
             raise HTTPException(
                 content=ExceptionContent(
-                    error=ApiError.from_json(e.detail),
+                    error=e.detail.get("code"),
                     message=e.detail.get("message"),
                 ),
                 headers={AUTHENTICATE_HEADER: BEARER_AUTH_SCHEME},
@@ -210,7 +210,7 @@ class AuthHandler:
         except HTTPException as e:
             raise HTTPException(
                 content=ExceptionContent(
-                    error=ApiError.from_json(e.detail),
+                    error=e.detail.get("code"),
                     message=e.detail.get("message"),
                 ),
                 headers={AUTHENTICATE_HEADER: BASIC_AUTH_SCHEME},
@@ -237,7 +237,7 @@ class AuthHandler:
         except HTTPException as e:
             raise HTTPException(
                 content=ExceptionContent(
-                    error=ApiError.from_json(e.detail),
+                    error=e.detail.get("code"),
                     message=e.detail.get("message"),
                 ),
                 headers={
@@ -289,7 +289,7 @@ class AuthHandler:
         else:
             raise HTTPException(
                 content=ExceptionContent(
-                    error=ApiError.NO_CREDENTIALS,
+                    error='no_credentials',
                     message="No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
                 ),
                 headers={

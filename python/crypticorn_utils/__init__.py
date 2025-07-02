@@ -6,7 +6,7 @@ from crypticorn_utils.errors import *
 from crypticorn_utils.exceptions import *
 from crypticorn_utils.logging import *
 from crypticorn_utils.metrics import *
-from crypticorn_utils.middleware import *   
+from crypticorn_utils.middleware import *
 from crypticorn_utils.pagination import *
 from crypticorn_utils.utils import *
 from crypticorn_utils.warnings import *

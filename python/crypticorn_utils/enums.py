@@ -75,7 +75,6 @@ class Scope(StrEnum):
             cls.WRITE_TRADE_STRATEGIES,
             cls.WRITE_PAY_PRODUCTS,
             cls.WRITE_PAY_COUPONS,
-            cls.READ_PAY_COUPONS,
             cls.WRITE_ADMIN,
             cls.READ_ADMIN,
         ]

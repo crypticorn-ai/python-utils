@@ -27,6 +27,7 @@ ARG API_ENV
 
 RUN if [ "$API_ENV" != "prod" ]; then \
     pip install --pre crypticorn; \
+    pip install --pre crypticorn-utils; \
     fi
 
 RUN pip install --no-cache-dir -r requirements.txt

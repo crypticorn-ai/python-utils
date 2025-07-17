@@ -37,6 +37,7 @@ class LogLevel(StrEnum):
         else:
             return C.RESET
 
+
 _LOGFORMAT = (
     f"{C.CYAN_BOLD}%(asctime)s{C.RESET} - "
     f"{C.GREEN_BOLD}%(name)s{C.RESET} - "

@@ -1,19 +1,18 @@
 import time
-from contextlib import asynccontextmanager
 
-from crypticorn_utils.logging import configure_logging
+from crypticorn_utils.metrics import has_migrated
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from crypticorn_utils.metrics import has_migrated
 
 if has_migrated:
     from crypticorn_utils.metrics import (
-    HTTP_REQUEST_DURATION,
-    HTTP_REQUESTS_COUNT,
-    REQUEST_SIZE,
-    RESPONSE_SIZE,
-)
+        HTTP_REQUEST_DURATION,
+        HTTP_REQUESTS_COUNT,
+        REQUEST_SIZE,
+        RESPONSE_SIZE,
+    )
+
     # otherwise prometheus reqisters metrics twice, resulting in an exception
     class PrometheusMiddleware(BaseHTTPMiddleware):
         async def dispatch(self, request: Request, call_next):
@@ -76,6 +75,7 @@ if has_migrated:
 
             return response
 
+
 def add_middleware(app: "FastAPI"):
     app.add_middleware(
         CORSMiddleware,
@@ -90,13 +90,3 @@ def add_middleware(app: "FastAPI"):
     )
     if has_migrated:
         app.add_middleware(PrometheusMiddleware)
-
-
-@asynccontextmanager
-async def default_lifespan(app: FastAPI):
-    """Default lifespan for the applications.
-    This is used to configure the logging for the application.
-    To override this, pass a different lifespan to the FastAPI constructor or call this lifespan within a custom lifespan.
-    """
-    configure_logging()
-    yield

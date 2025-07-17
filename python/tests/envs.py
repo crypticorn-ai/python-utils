@@ -1,13 +1,14 @@
 import asyncio
+import datetime
 import os
-from dotenv import load_dotenv
-from crypticorn_utils.enums import BaseUrl
-from crypticorn_utils.utils import gen_random_id
+import time
+
+import jwt
 from crypticorn import AsyncClient
 from crypticorn.auth import CreateApiKeyRequest
-import jwt
-import time
-import datetime
+from crypticorn_utils.enums import BaseUrl
+from crypticorn_utils.utils import gen_random_id
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -32,6 +33,7 @@ ADMIN_SCOPES = [
     "read:admin",
 ]
 INTERNAL_SCOPES = ["write:trade:actions"]
+
 
 async def generate_valid_jwt(
     user_id: str, scopes: list[str] = [], is_admin=False, expires_at: int = None
@@ -98,9 +100,7 @@ VALID_PREDICTION_JWT = asyncio.run(
     generate_valid_jwt(user_id=USER_ID, scopes=PURCHASEABLE_SCOPES)
 )
 VALID_ADMIN_JWT = asyncio.run(
-    generate_valid_jwt(
-        user_id=USER_ID, scopes=PURCHASEABLE_SCOPES, is_admin=True
-    )
+    generate_valid_jwt(user_id=USER_ID, scopes=PURCHASEABLE_SCOPES, is_admin=True)
 )
 # API KEY
 ONE_SCOPE_API_KEY_SCOPE = "read:trade:bots"

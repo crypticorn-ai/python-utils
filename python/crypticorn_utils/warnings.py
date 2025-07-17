@@ -42,6 +42,7 @@ class CrypticornDeprecationWarning(DeprecationWarning):
         )
         return message
 
+
 class CrypticornExperimentalWarning(Warning):
     """A Crypticorn specific experimental functionality warning.
 

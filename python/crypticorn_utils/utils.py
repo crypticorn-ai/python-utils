@@ -2,18 +2,16 @@
 
 import random
 import string
-import warnings
 from datetime import datetime
-from decimal import Decimal
-from typing import Any, Union
+from typing import Any
 
-import typing_extensions
 
 def gen_random_id(length: int = 20) -> str:
     """Generate a random base62 string (a-zA-Z0-9) of specified length. The max possible combinations is 62^length.
     Kucoin max 40, bingx max 40"""
     charset = string.ascii_letters + string.digits
     return "".join(random.choice(charset) for _ in range(length))
+
 
 def optional_import(module_name: str, extra_name: str) -> Any:
     """

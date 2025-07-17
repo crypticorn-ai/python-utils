@@ -21,6 +21,24 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v1.0.0-rc.1 (2025-07-17)
+
+### Build System
+
+- Deployment config for v1 branches
+  ([`b94d9e7`](https://github.com/crypticorn-ai/util-libraries/commit/b94d9e72616e398760993f6ebb1a6fd876a95802))
+
+BREAKING CHANGE: - removed: mixins, openapi and both router modules; CLI; Scope Enum class;
+  `throw_if_none` and `throw_if_falsy`; all deprecation warnings - reworked: exceptions and error
+  modules
+
+- Mark packaage as typed
+  ([`69544a8`](https://github.com/crypticorn-ai/util-libraries/commit/69544a8709f4d55850e107031b82d91c28334b3c))
+
+- Remove support for python versions 3.9 and 3.10
+  ([`80b8543`](https://github.com/crypticorn-ai/util-libraries/commit/80b8543ed5559a0de421aef4e2382193e930751a))
+
+
 ## v0.1.0-rc.1 (2025-06-23)
 
 ### Documentation

@@ -5,6 +5,7 @@ try:
 except ImportError:
     from strenum import StrEnum
 
+
 class Exchange(StrEnum):
     """All exchanges used in the crypticorn ecosystem. Refer to the APIs for support for a specific usecase (data, trading, etc.)."""
 
@@ -55,4 +56,3 @@ class BaseUrl(StrEnum):
             return cls.LOCAL
         elif env == ApiEnv.DOCKER:
             return cls.DOCKER
-

@@ -1,16 +1,22 @@
 import json
+
 try:
     from enum import StrEnum
 except ImportError:
     from strenum import StrEnum
+
 from typing import Union
 
 from crypticorn.auth import AuthClient, Configuration, Verify200Response
 from crypticorn.auth.client.exceptions import ApiException
 from crypticorn_utils.enums import BaseUrl
-from crypticorn_utils.exceptions import ExceptionHandler, BaseError, ErrorType, ErrorLevel
-from fastapi import HTTPException, status
-from fastapi import Depends, Query
+from crypticorn_utils.exceptions import (
+    BaseError,
+    ErrorLevel,
+    ErrorType,
+    ExceptionHandler,
+)
+from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import (
     APIKeyHeader,
     HTTPAuthorizationCredentials,
@@ -21,6 +27,7 @@ from fastapi.security import (
 )
 from typing_extensions import Annotated
 
+
 class AuthErrorCodes(StrEnum):
     INVALID_API_KEY = "invalid_api_key"
     EXPIRED_API_KEY = "expired_api_key"
@@ -30,6 +37,7 @@ class AuthErrorCodes(StrEnum):
     NO_CREDENTIALS = "no_credentials"
     INSUFFICIENT_SCOPES = "insufficient_scopes"
     UNKNOWN_ERROR = "unknown_error"
+
 
 class AuthError(BaseError):
     INVALID_API_KEY = (
@@ -88,6 +96,7 @@ class AuthError(BaseError):
         status.HTTP_500_INTERNAL_SERVER_ERROR,
         status.WS_1011_INTERNAL_ERROR,
     )
+
 
 handler = ExceptionHandler(callback=AuthError.from_identifier)
 
@@ -161,7 +170,12 @@ class AuthHandler:
         Checks if the required scopes are a subset of the user scopes.
         """
         if not set(api_scopes).issubset(user_scopes):
-            raise handler.build_exception(AuthErrorCodes.INSUFFICIENT_SCOPES, "Insufficient scopes to access this resource (required: " + ", ".join(api_scopes) + ")")
+            raise handler.build_exception(
+                AuthErrorCodes.INSUFFICIENT_SCOPES,
+                "Insufficient scopes to access this resource (required: "
+                + ", ".join(api_scopes)
+                + ")",
+            )
 
     async def _extract_message(self, e: ApiException) -> str:
         """
@@ -200,7 +214,7 @@ class AuthHandler:
                     AuthErrorCodes.INVALID_BEARER
                 )  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
             return handler.build_exception(error, message)
-        
+
         elif isinstance(e, HTTPException):
             return e
         else:
@@ -221,7 +235,11 @@ class AuthHandler:
                 bearer=None, api_key=api_key, basic=None, sec=sec
             )
         except HTTPException as e:
-            raise handler.build_exception(e.detail.get("code"), e.detail.get("message"), headers={AUTHENTICATE_HEADER: APIKEY_AUTH_SCHEME})
+            raise handler.build_exception(
+                e.detail.get("code"),
+                e.detail.get("message"),
+                headers={AUTHENTICATE_HEADER: APIKEY_AUTH_SCHEME},
+            )
 
     async def bearer_auth(
         self,
@@ -241,7 +259,11 @@ class AuthHandler:
                 bearer=bearer, api_key=None, basic=None, sec=sec
             )
         except HTTPException as e:
-            raise handler.build_exception(e.detail.get("code"), e.detail.get("message"), headers={AUTHENTICATE_HEADER: BEARER_AUTH_SCHEME})
+            raise handler.build_exception(
+                e.detail.get("code"),
+                e.detail.get("message"),
+                headers={AUTHENTICATE_HEADER: BEARER_AUTH_SCHEME},
+            )
 
     async def basic_auth(
         self,
@@ -255,7 +277,11 @@ class AuthHandler:
                 basic=credentials, bearer=None, api_key=None, sec=None
             )
         except HTTPException as e:
-            raise handler.build_exception(e.detail.get("code"), e.detail.get("message"), headers={AUTHENTICATE_HEADER: BASIC_AUTH_SCHEME})
+            raise handler.build_exception(
+                e.detail.get("code"),
+                e.detail.get("message"),
+                headers={AUTHENTICATE_HEADER: BASIC_AUTH_SCHEME},
+            )
 
     async def combined_auth(
         self,
@@ -276,7 +302,13 @@ class AuthHandler:
                 basic=None, bearer=bearer, api_key=api_key, sec=sec
             )
         except HTTPException as e:
-            raise handler.build_exception(e.detail.get("code"), e.detail.get("message"), headers={AUTHENTICATE_HEADER: f"{BEARER_AUTH_SCHEME}, {APIKEY_AUTH_SCHEME}"})
+            raise handler.build_exception(
+                e.detail.get("code"),
+                e.detail.get("message"),
+                headers={
+                    AUTHENTICATE_HEADER: f"{BEARER_AUTH_SCHEME}, {APIKEY_AUTH_SCHEME}"
+                },
+            )
 
     async def full_auth(
         self,
@@ -325,7 +357,13 @@ class AuthHandler:
         if first_error:
             raise first_error
         else:
-            raise handler.build_exception(AuthErrorCodes.NO_CREDENTIALS, "No credentials provided. Check the WWW-Authenticate header for the available authentication methods.", headers={AUTHENTICATE_HEADER: f"{BEARER_AUTH_SCHEME}, {APIKEY_AUTH_SCHEME}, {BASIC_AUTH_SCHEME}"})
+            raise handler.build_exception(
+                AuthErrorCodes.NO_CREDENTIALS,
+                "No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
+                headers={
+                    AUTHENTICATE_HEADER: f"{BEARER_AUTH_SCHEME}, {APIKEY_AUTH_SCHEME}, {BASIC_AUTH_SCHEME}"
+                },
+            )
 
     async def ws_api_key_auth(
         self,

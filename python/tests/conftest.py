@@ -1,7 +1,8 @@
+from typing import AsyncGenerator
+
 import pytest_asyncio
 from crypticorn_utils.auth import AuthHandler
 from crypticorn_utils.enums import BaseUrl
-from typing import AsyncGenerator
 from tests.envs import API_ENV
 
 

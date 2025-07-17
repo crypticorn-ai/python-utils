@@ -1,6 +1,6 @@
 # metrics/registry.py
-from prometheus_client import CollectorRegistry, Counter, Histogram
 from crypticorn_utils._migration import has_migrated
+from prometheus_client import CollectorRegistry, Counter, Histogram
 
 registry = CollectorRegistry()
 
@@ -22,7 +22,6 @@ if has_migrated:
     REQUEST_SIZE = Histogram(
         "http_request_size_bytes", "Size of HTTP request bodies", ["method", "endpoint"]
     )
-
 
     RESPONSE_SIZE = Histogram(
         "http_response_size_bytes",

@@ -1,18 +1,18 @@
 import pytest
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBasicCredentials
 from crypticorn_utils.auth import AuthHandler
 from crypticorn_utils.exceptions import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBasicCredentials
 from tests.envs import (
-    VALID_JWT,
-    VALID_ADMIN_JWT,
-    VALID_PREDICTION_JWT,
-    EXPIRED_JWT,
+    ADMIN_SCOPES,
     EXPIRED_API_KEY,
+    EXPIRED_JWT,
+    INTERNAL_SCOPES,
     ONE_SCOPE_API_KEY,
     ONE_SCOPE_API_KEY_SCOPE,
     PURCHASEABLE_SCOPES,
-    ADMIN_SCOPES,
-    INTERNAL_SCOPES,
+    VALID_ADMIN_JWT,
+    VALID_JWT,
+    VALID_PREDICTION_JWT,
 )
 
 # Debug
@@ -29,7 +29,7 @@ async def test_combined_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.combined_auth(bearer=None, api_key=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 # BEARER AUTH TESTS
@@ -39,7 +39,7 @@ async def test_bearer_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.bearer_auth(bearer=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 @pytest.mark.asyncio
@@ -50,7 +50,7 @@ async def test_bearer_auth_with_invalid_token(auth_handler: AuthHandler):
             bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid")
         )
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'invalid_bearer'
+    assert e.value.detail.get("code") == "invalid_bearer"
 
 
 @pytest.mark.asyncio
@@ -70,7 +70,7 @@ async def test_api_key_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.api_key_auth(api_key=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 @pytest.mark.asyncio
@@ -79,7 +79,7 @@ async def test_api_key_auth_with_invalid_key(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.api_key_auth(api_key="invalid")
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'invalid_api_key'
+    assert e.value.detail.get("code") == "invalid_api_key"
 
 
 @pytest.mark.asyncio
@@ -97,7 +97,7 @@ async def test_basic_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.basic_auth(credentials=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 @pytest.mark.asyncio
@@ -108,7 +108,7 @@ async def test_basic_auth_with_invalid_credentials(auth_handler: AuthHandler):
             credentials=HTTPBasicCredentials(username="invalid", password="invalid")
         )
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'invalid_basic_auth'
+    assert e.value.detail.get("code") == "invalid_basic_auth"
 
 
 # FULL AUTH TESTS
@@ -118,7 +118,7 @@ async def test_full_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.full_auth(bearer=None, api_key=None, basic=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 @pytest.mark.asyncio
@@ -155,7 +155,7 @@ async def test_combined_auth_with_invalid_bearer_token(auth_handler: AuthHandler
             api_key=None,
         )
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'invalid_bearer'
+    assert e.value.detail.get("code") == "invalid_bearer"
 
 
 @pytest.mark.asyncio
@@ -169,7 +169,7 @@ async def test_combined_auth_with_expired_bearer_token(auth_handler: AuthHandler
             api_key=None,
         )
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'expired_bearer'
+    assert e.value.detail.get("code") == "expired_bearer"
 
 
 @pytest.mark.asyncio
@@ -242,7 +242,7 @@ async def test_combined_auth_with_invalid_api_key(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.combined_auth(bearer=None, api_key="123")
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'invalid_api_key'
+    assert e.value.detail.get("code") == "invalid_api_key"
 
 
 @pytest.mark.asyncio
@@ -259,7 +259,7 @@ async def test_combined_auth_with_expired_api_key(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.combined_auth(bearer=None, api_key=EXPIRED_API_KEY)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'expired_api_key'
+    assert e.value.detail.get("code") == "expired_api_key"
 
 
 # WEBSOCKET AUTH TESTS
@@ -269,7 +269,7 @@ async def test_ws_combined_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.ws_combined_auth(bearer=None, api_key=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 @pytest.mark.asyncio
@@ -294,7 +294,7 @@ async def test_ws_bearer_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.ws_bearer_auth(bearer=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 @pytest.mark.asyncio
@@ -311,7 +311,7 @@ async def test_ws_api_key_auth_without_credentials(auth_handler: AuthHandler):
     with pytest.raises(HTTPException) as e:
         await auth_handler.ws_api_key_auth(api_key=None)
     assert e.value.status_code == 401
-    assert e.value.detail.get("code") == 'no_credentials'
+    assert e.value.detail.get("code") == "no_credentials"
 
 
 @pytest.mark.asyncio
@@ -338,7 +338,7 @@ async def test_combined_auth_scope_validation_with_insufficient_scopes(
             sec=SecurityScopes(scopes=["read:admin"]),
         )
     assert e.value.status_code == 403
-    assert e.value.detail.get("code") == 'insufficient_scopes'
+    assert e.value.detail.get("code") == "insufficient_scopes"
 
 
 @pytest.mark.asyncio

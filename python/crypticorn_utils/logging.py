@@ -4,14 +4,10 @@ import logging
 import os
 import sys
 from datetime import datetime
+from enum import StrEnum
 from logging.handlers import RotatingFileHandler
 
 from crypticorn_utils.ansi_colors import AnsiColors as C
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
 
 
 class LogLevel(StrEnum):

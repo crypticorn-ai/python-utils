@@ -1,10 +1,5 @@
 import json
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
-
+from enum import StrEnum
 from typing import Union
 
 from crypticorn.auth import AuthClient, Configuration, Verify200Response

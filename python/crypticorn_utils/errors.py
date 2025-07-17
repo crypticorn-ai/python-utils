@@ -1,9 +1,6 @@
 """Comprehensive error handling system defining various API error types, HTTP exceptions, and error content structures."""
 
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
+from enum import StrEnum
 
 
 class ErrorType(StrEnum):

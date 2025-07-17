@@ -1,9 +1,6 @@
 """Defines common enumerations used throughout the codebase for type safety and consistency."""
 
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
+from enum import StrEnum
 
 
 class Exchange(StrEnum):

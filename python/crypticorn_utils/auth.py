@@ -160,7 +160,7 @@ class AuthHandler:
 
     async def _validate_scopes(
         self, api_scopes: list[str], user_scopes: list[str]
-    ) -> bool:
+    ) -> None:
         """
         Checks if the required scopes are a subset of the user scopes.
         """

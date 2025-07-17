@@ -1,5 +1,5 @@
 import logging
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Callable, Optional, Self, TypedDict, Union
 
 from crypticorn_utils.errors import (
@@ -13,11 +13,6 @@ from fastapi import Request, WebSocketException
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
 
 _logger = logging.getLogger("crypticorn")
 

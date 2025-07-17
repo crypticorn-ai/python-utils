@@ -59,6 +59,15 @@ match = "dev"
 prerelease = true
 prerelease_token = "rc"
 
+[tool.semantic_release.branches.v1]
+match = "v1"
+prerelease = false
+
+[tool.semantic_release.branches.v1-dev]
+match = "v1-dev"
+prerelease = true
+prerelease_token = "rc"
+
 [project.urls]
 Homepage = "https://crypticorn.com"
 Documentation = "https://docs.crypticorn.com"

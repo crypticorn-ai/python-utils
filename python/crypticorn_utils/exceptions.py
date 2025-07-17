@@ -100,7 +100,7 @@ class ExceptionHandler:
             code=content.status_code,
         )
 
-    def build_exception(
+    def build_exception(  # type: ignore[return]
         self,
         code: str,
         message: Optional[str] = None,

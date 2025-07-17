@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 from enum import StrEnum
 from logging.handlers import RotatingFileHandler
+from typing import Optional
 
 from crypticorn_utils.ansi_colors import AnsiColors as C
 
@@ -59,12 +60,12 @@ class _CustomFormatter(logging.Formatter):
 
 
 def configure_logging(
-    name: str = None,
+    name: Optional[str] = None,
     fmt: str = _LOGFORMAT,
     datefmt: str = _DATEFMT,
     stdout_level: int = logging.INFO,
     file_level: int = logging.INFO,
-    log_file: str = None,
+    log_file: Optional[str] = None,
     filters: list[logging.Filter] = [],
 ) -> None:
     """Configures the logging for the application.

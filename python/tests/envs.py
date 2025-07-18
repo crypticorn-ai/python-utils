@@ -41,7 +41,7 @@ async def generate_api_key(
             CreateApiKeyRequest(
                 name=f"pytest-{gen_random_id()}",
                 scopes=scopes,
-                expires_at=expires_at,
+                expires_at=expires_at.isoformat() if expires_at else None,
             )
         )
         return res.api_key

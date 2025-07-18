@@ -74,7 +74,7 @@ VALID_JWT = asyncio.run(
     generate_valid_jwt(user_id="user-without-read-predictions")
 )  # dummy user since the USER_ID has access to the predictions ($300+)
 VALID_PREDICTION_JWT = asyncio.run(
-    generate_valid_jwt(user_id=USER_ID, scopes=Scope.purchaseable_scopes())
+    generate_valid_jwt(user_id="user-with-read-predictions", scopes=['read:predictions'])
 )
 VALID_ADMIN_JWT = asyncio.run(
     generate_valid_jwt(

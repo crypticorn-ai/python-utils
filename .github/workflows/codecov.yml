@@ -24,11 +24,15 @@ env:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    # skip if dev and crypticorn-pre is false, this allows us to to deploy pre releases to dev even though the tests fail with crypticorn stable version
+    # if the tests fail with crypticorn stable version but pass with pre-release, we want to deploy the crypticorn pre-release to stable first
+    continue-on-error: ${{ env.API_ENV == 'dev' && matrix.crypticorn-pre == false }}
 
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        crypticorn-pre: [true, false]
 
     steps:
       - name: Set up Python ${{ matrix.python-version }}
@@ -42,6 +46,10 @@ jobs:
       - name: Generate .env
         run: ./scripts/merge-env.sh
 
+      - name: Install crypticorn pre-release
+        if: ${{ matrix.crypticorn-pre }}
+        run: pip install --pre crypticorn
+
       - name: Install package
         run: pip install -e python[test,dev]
 
@@ -49,6 +57,7 @@ jobs:
         run: |
           cd python
           python -m build --wheel --sdist
+
       - name: Import verification
         run: |
           cd python
@@ -56,11 +65,6 @@ jobs:
 
       - name: Test with pytest
         run: pytest python/tests/ --cov=crypticorn_utils --cov-branch --cov-report=xml --cov-report=term-missing:skip-covered
-
-      # - name: Use Codecov to track coverage
-      #   uses: codecov/codecov-action@v2
-      #   with:
-      #     files: ./coverage.xml
 
       - name: Pytest coverage comment
         if: ${{ matrix.python-version == '3.11' }} # current docker python backend version

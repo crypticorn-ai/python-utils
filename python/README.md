@@ -21,6 +21,19 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v0.1.1-rc.2 (2025-07-18)
+
+### Bug Fixes
+
+- Change verify api key request
+  ([`11af6c2`](https://github.com/crypticorn-ai/util-libraries/commit/11af6c2c12a92b0a4c1c3b83ba86aca2a401ac45))
+
+### Testing
+
+- Fix failing auth test
+  ([`03a3db1`](https://github.com/crypticorn-ai/util-libraries/commit/03a3db1341aaf51c6162454924cb929d6cfee94a))
+
+
 ## v0.1.1-rc.1 (2025-07-02)
 
 ### Bug Fixes

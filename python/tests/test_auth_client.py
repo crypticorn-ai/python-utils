@@ -207,7 +207,7 @@ async def test_combined_auth_with_valid_prediction_bearer_token(
         api_key=None,
     )
     assert all(
-        [key in res.scopes for key in PURCHASEABLE_SCOPES]
+        [key in res.scopes for key in ['read:predictions']]
     ), "non admin which purchased predictions should have access to purchaseable scopes"
     assert all(
         [key not in res.scopes for key in ADMIN_SCOPES]

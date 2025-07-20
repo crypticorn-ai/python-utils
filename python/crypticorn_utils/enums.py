@@ -50,8 +50,6 @@ class Scope(StrEnum):
     READ_PAY_PAYMENTS = "read:pay:payments"
     READ_PAY_PRODUCTS = "read:pay:products"
     WRITE_PAY_PRODUCTS = "write:pay:products"
-    READ_PAY_NOW = "read:pay:now"
-    WRITE_PAY_NOW = "write:pay:now"
     WRITE_PAY_COUPONS = "write:pay:coupons"
     READ_PAY_COUPONS = "read:pay:coupons"
 
@@ -75,7 +73,6 @@ class Scope(StrEnum):
             cls.WRITE_TRADE_STRATEGIES,
             cls.WRITE_PAY_PRODUCTS,
             cls.WRITE_PAY_COUPONS,
-            cls.READ_PAY_COUPONS,
             cls.WRITE_ADMIN,
             cls.READ_ADMIN,
         ]

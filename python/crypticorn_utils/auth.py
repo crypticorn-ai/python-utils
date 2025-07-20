@@ -61,8 +61,8 @@ class AuthHandler:
         """
         Verifies the API key.
         """
-        # self.client.config.api_key = {apikey_header.scheme_name: api_key}
-        return await self.client.login.verify_api_key(api_key)
+        self.client.config.api_key = {"APIKeyHeader": api_key}
+        return await self.client.login.verify()
 
     async def _verify_bearer(
         self, bearer: HTTPAuthorizationCredentials

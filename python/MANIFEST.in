@@ -1,3 +1,2 @@
-graft crypticorn/cli/templates
 include README.md
 include LICENSE

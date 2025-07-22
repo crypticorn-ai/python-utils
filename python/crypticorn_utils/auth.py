@@ -80,7 +80,7 @@ class AuthHandler:
         return await self.client.login.verify_basic_auth(basic.username, basic.password)
 
     async def _validate_scopes(
-        self, api_scopes: list[Scope], user_scopes: list[Scope]
+        self, api_scopes: list[str], user_scopes: list[str]
     ) -> bool:
         """
         Checks if the required scopes are a subset of the user scopes.
@@ -92,6 +92,10 @@ class AuthHandler:
                     message="Insufficient scopes to access this resource (required: "
                     + ", ".join(api_scopes)
                     + ")",
+                    details={
+                        "required_scopes": api_scopes,
+                        "granted_scopes": user_scopes,
+                    },
                 ),
             )
 
@@ -277,7 +281,12 @@ class AuthHandler:
                 if res is None:
                     continue
                 if sec:
-                    await self._validate_scopes(sec.scopes, res.scopes)
+                    required = [
+                        s.value if isinstance(s, Scope) else str(s)
+                        for s in sec.scopes
+                    ]
+                    granted = [str(s) for s in res.scopes]
+                    await self._validate_scopes(required, granted)
                 return res
 
             except Exception as e:

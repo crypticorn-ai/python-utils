@@ -21,6 +21,14 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v0.1.2 (2025-07-22)
+
+### Bug Fixes
+
+- Failing scope comparison in some environments
+  ([`004495d`](https://github.com/crypticorn-ai/util-libraries/commit/004495da87b973f43b3e32abe96493dac1b6204a))
+
+
 ## v0.1.1 (2025-07-20)
 
 

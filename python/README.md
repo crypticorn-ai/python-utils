@@ -14,6 +14,29 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v1.0.0-rc.2 (2025-07-31)
+
+### Bug Fixes
+
+- Change verify api key request
+  ([`2dee77f`](https://github.com/crypticorn-ai/util-libraries/commit/2dee77f64495b2bf28628194bbd9bc4d0b856294))
+
+### Documentation
+
+- Update Readme
+  ([`c2f8eec`](https://github.com/crypticorn-ai/util-libraries/commit/c2f8eec654be4cff89643abec915a5fd3476f1fa))
+
+### Refactoring
+
+- Improve type hinting in partial_model decorator
+  ([`de558ba`](https://github.com/crypticorn-ai/util-libraries/commit/de558ba6b495ed4cc9121ac0e34d9460a87c0122))
+
+### Testing
+
+- Fix failing auth test
+  ([`5ff77b3`](https://github.com/crypticorn-ai/util-libraries/commit/5ff77b3e49e5348c4c38d329a643a03717cd2db0))
+
+
 ## v1.0.0-rc.1 (2025-07-17)
 
 ### Build System

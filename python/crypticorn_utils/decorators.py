@@ -1,12 +1,14 @@
 from copy import deepcopy
-from typing import Any, Optional, Tuple, Type
+from typing import Any, Optional, Tuple, Type, TypeVar
 
 from pydantic import BaseModel, create_model
 from pydantic.fields import FieldInfo
 
+T = TypeVar("T", bound=BaseModel)
 
-def partial_model(model: Type[BaseModel]) -> Type[BaseModel]:
-    """Marks all fields of a model as optional. Useful for updating models.
+
+def partial_model(model: Type[T]) -> Type[T]:
+    """Marks all fields of a model as optional. Useful for update models.
     Inherits all fields, docstrings, and the model name.
 
     >>> @partial_model

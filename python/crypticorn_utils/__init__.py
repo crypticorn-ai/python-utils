@@ -1,5 +1,4 @@
 from crypticorn_utils.auth import AuthHandler
-from crypticorn_utils.decorators import partial_model
 from crypticorn_utils.enums import ApiEnv, BaseUrl, Exchange, MarketType
 from crypticorn_utils.errors import ErrorLevel, ErrorType
 from crypticorn_utils.exceptions import BaseError, ExceptionHandler, ExceptionType
@@ -21,7 +20,6 @@ from crypticorn_utils.utils import datetime_to_timestamp, gen_random_id, optiona
 
 __all__ = [
     "AuthHandler",
-    "partial_model",
     "Exchange",
     "MarketType",
     "ApiEnv",

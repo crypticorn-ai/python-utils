@@ -50,7 +50,7 @@ insertion_flag = "<!-- changelog-insertion -->"
 [tool.semantic_release.changelog.default_templates]
 changelog_file = "README.md"
 
-# https://python-semantic-release.readthedocs.io/en/latest/multibranch_releases.html#multibranch-releases
+# https://python-semantic-release.readthedocs.io/en/latest/concepts/multibranch_releases.html#multibranch-releases
 [tool.semantic_release.branches.main]
 match = "main"
 prerelease = false

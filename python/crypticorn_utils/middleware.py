@@ -3,7 +3,7 @@ import warnings
 from contextlib import asynccontextmanager
 
 from crypticorn_utils.logging import configure_logging
-from crypticorn_utils.warnings import CrypticornDeprecatedSince217
+from crypticorn_utils.warnings import CrypticornDeprecatedSince01
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -84,7 +84,7 @@ if has_migrated:
 def add_cors_middleware(app: "FastAPI"):
     warnings.warn(
         "add_cors_middleware is deprecated. Use add_middleware instead.",
-        CrypticornDeprecatedSince217,
+        CrypticornDeprecatedSince01,
     )
     app.add_middleware(
         CORSMiddleware,

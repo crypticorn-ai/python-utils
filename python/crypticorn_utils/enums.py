@@ -8,7 +8,7 @@ except ImportError:
 import warnings
 
 from crypticorn_utils.mixins import ValidateEnumMixin
-from crypticorn_utils.warnings import CrypticornDeprecatedSince215
+from crypticorn_utils.warnings import CrypticornDeprecatedSince01
 
 
 class Scope(StrEnum):
@@ -127,7 +127,7 @@ class InternalExchange(ValidateEnumMixin, StrEnum):
     def __getattr__(cls, name):
         warnings.warn(
             "The `InternalExchange` enum is deprecated; use `Exchange` instead.",
-            category=CrypticornDeprecatedSince215,
+            category=CrypticornDeprecatedSince01,
         )
         return super().__getattr__(name)
 

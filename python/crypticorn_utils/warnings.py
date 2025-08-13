@@ -13,8 +13,8 @@ class CrypticornDeprecationWarning(DeprecationWarning):
 
     Attributes:
         message: Description of the warning.
-        since: Crypticorn version in what the deprecation was introduced.
-        expected_removal: Crypticorn version in what the corresponding functionality expected to be removed.
+        since: crypticorn_utils version in what the deprecation was introduced.
+        expected_removal: crypticorn_utils version in what the corresponding functionality expected to be removed.
     """
 
     message: str
@@ -37,38 +37,22 @@ class CrypticornDeprecationWarning(DeprecationWarning):
 
     def __str__(self) -> str:
         message = (
-            f"{self.message}. Deprecated in Crypticorn v{self.since[0]}.{self.since[1]}"
+            f"{self.message}. Deprecated in crypticorn_utils v{self.since[0]}.{self.since[1]}"
             f" to be removed in v{self.expected_removal[0]}.{self.expected_removal[1]}."
         )
         return message
 
-
-class CrypticornDeprecatedSince25(CrypticornDeprecationWarning):
-    """A specific `CrypticornDeprecationWarning` subclass defining functionality deprecated since Crypticorn 2.5."""
-
-    def __init__(self, message: str, *args: object) -> None:
-        super().__init__(message, *args, since=(2, 5), expected_removal=(3, 0))
-
-
-class CrypticornDeprecatedSince28(CrypticornDeprecationWarning):
-    """A specific `CrypticornDeprecationWarning` subclass defining functionality deprecated since Crypticorn 2.8."""
+class CrypticornDeprecatedSince01(CrypticornDeprecationWarning):
+    """A specific `CrypticornDeprecationWarning` subclass defining functionality deprecated since crypticorn_utils 0.1."""
 
     def __init__(self, message: str, *args: object) -> None:
-        super().__init__(message, *args, since=(2, 8), expected_removal=(3, 0))
+        super().__init__(message, *args, since=(0, 1), expected_removal=(1, 0))
 
-
-class CrypticornDeprecatedSince215(CrypticornDeprecationWarning):
-    """A specific `CrypticornDeprecationWarning` subclass defining functionality deprecated since Crypticorn 2.15."""
-
-    def __init__(self, message: str, *args: object) -> None:
-        super().__init__(message, *args, since=(2, 15), expected_removal=(3, 0))
-
-
-class CrypticornDeprecatedSince217(CrypticornDeprecationWarning):
-    """A specific `CrypticornDeprecationWarning` subclass defining functionality deprecated since Crypticorn 2.17."""
+class CrypticornDeprecatedSince02(CrypticornDeprecationWarning):
+    """A specific `CrypticornDeprecationWarning` subclass defining functionality deprecated since crypticorn_utils 0.2."""
 
     def __init__(self, message: str, *args: object) -> None:
-        super().__init__(message, *args, since=(2, 17), expected_removal=(3, 0))
+        super().__init__(message, *args, since=(0, 2), expected_removal=(1, 0))
 
 
 class CrypticornExperimentalWarning(Warning):

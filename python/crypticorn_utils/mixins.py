@@ -2,7 +2,7 @@ import logging
 import warnings
 from enum import EnumMeta
 
-from crypticorn_utils.warnings import CrypticornDeprecatedSince28
+from crypticorn_utils.warnings import CrypticornDeprecatedSince01
 
 _logger = logging.getLogger("crypticorn")
 
@@ -45,7 +45,7 @@ class ExcludeEnumMixin:
         if cls.__name__.startswith("ExcludeEnumMixin"):
             warnings.warn(
                 "The `ExcludeEnumMixin` class is deprecated. Should be removed from enums inheriting this class.",
-                category=CrypticornDeprecatedSince28,
+                category=CrypticornDeprecatedSince01,
             )
 
     @classmethod

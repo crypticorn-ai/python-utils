@@ -9,7 +9,7 @@ from typing import Any, Union
 
 import typing_extensions
 from crypticorn_utils.exceptions import ApiError, ExceptionContent, HTTPException
-from crypticorn_utils.warnings import CrypticornDeprecatedSince25
+from crypticorn_utils.warnings import CrypticornDeprecatedSince01
 
 
 def throw_if_none(
@@ -51,7 +51,7 @@ def is_equal(
     """
     warnings.warn(
         "The `is_equal` method is deprecated; use `math.is_close` instead.",
-        category=CrypticornDeprecatedSince25,
+        category=CrypticornDeprecatedSince01,
     )
     if not isinstance(a, Decimal):
         a = Decimal(str(a))

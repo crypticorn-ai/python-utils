@@ -21,6 +21,19 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v0.2.0 (2025-08-13)
+
+### Features
+
+- Deprecate partial_model decorator and update warning mechanism
+  ([`18ad112`](https://github.com/crypticorn-ai/util-libraries/commit/18ad112bd5d843951381cc3e0714676b389597d5))
+
+### Refactoring
+
+- Update deprecation warnings to use CrypticornDeprecatedSince01 for consistency across modules
+  ([`aa27472`](https://github.com/crypticorn-ai/util-libraries/commit/aa274725d714da0243c145a3ed63ab672c28bca2))
+
+
 ## v0.1.2 (2025-07-22)
 
 ### Bug Fixes

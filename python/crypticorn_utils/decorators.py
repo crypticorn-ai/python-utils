@@ -1,10 +1,13 @@
 from copy import deepcopy
+import warnings
 from typing import Any, Optional, Tuple, Type
 
 from pydantic import BaseModel, create_model
 from pydantic.fields import FieldInfo
+from crypticorn_utils.warnings import CrypticornDeprecatedSince02
+from typing_extensions import deprecated
 
-
+@deprecated("The partial_model decorator is deprecated, for migration see https://github.com/crypticorn-ai/util-libraries/issues/5", category=None)
 def partial_model(model: Type[BaseModel]) -> Type[BaseModel]:
     """Marks all fields of a model as optional. Useful for updating models.
     Inherits all fields, docstrings, and the model name.
@@ -26,6 +29,10 @@ def partial_model(model: Type[BaseModel]) -> Type[BaseModel]:
         new.annotation = Optional[field.annotation]  # type: ignore
         return new.annotation, new
 
+    warnings.warn(
+        "The partial_model decorator is deprecated, for migration see https://github.com/crypticorn-ai/util-libraries/issues/5",
+        category=CrypticornDeprecatedSince02,
+    )
     return create_model(
         model.__name__,
         __base__=model,

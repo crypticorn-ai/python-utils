@@ -1,31 +1,8 @@
 """Defines common enumerations used throughout the codebase for type safety and consistency."""
 
-from enum import StrEnum
+from enum import StrEnum as _StrEnum
 
-
-class Exchange(StrEnum):
-    """All exchanges used in the crypticorn ecosystem. Refer to the APIs for support for a specific usecase (data, trading, etc.)."""
-
-    KUCOIN = "kucoin"
-    BINGX = "bingx"
-    BINANCE = "binance"
-    BYBIT = "bybit"
-    HYPERLIQUID = "hyperliquid"
-    BITGET = "bitget"
-    GATEIO = "gateio"
-    BITSTAMP = "bitstamp"
-
-
-class MarketType(StrEnum):
-    """
-    Market types
-    """
-
-    SPOT = "spot"
-    FUTURES = "futures"
-
-
-class ApiEnv(StrEnum):
+class ApiEnv(_StrEnum):
     """The environment the API is being used with."""
 
     PROD = "prod"
@@ -34,7 +11,7 @@ class ApiEnv(StrEnum):
     DOCKER = "docker"
 
 
-class BaseUrl(StrEnum):
+class BaseUrl(_StrEnum):
     """The base URL to connect to the API."""
 
     PROD = "https://api.crypticorn.com"

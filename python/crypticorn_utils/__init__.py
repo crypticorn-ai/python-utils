@@ -1,7 +1,7 @@
 from crypticorn_utils.auth import AuthHandler
-from crypticorn_utils.enums import ApiEnv, BaseUrl, Exchange, MarketType
+from crypticorn_utils.enums import ApiEnv, BaseUrl
 from crypticorn_utils.errors import ErrorLevel, ErrorType
-from crypticorn_utils.exceptions import BaseError, ExceptionHandler, ExceptionType
+from crypticorn_utils.exceptions import BaseError, ExceptionHandler, exception_response, ExceptionDetail
 from crypticorn_utils.logging import configure_logging, disable_logging
 from crypticorn_utils.middleware import add_middleware
 from crypticorn_utils.pagination import (
@@ -17,18 +17,16 @@ from crypticorn_utils.pagination import (
     SortParams,
 )
 from crypticorn_utils.utils import datetime_to_timestamp, gen_random_id, optional_import
+from crypticorn_utils.metrics import registry
 
 __all__ = [
     "AuthHandler",
-    "Exchange",
-    "MarketType",
     "ApiEnv",
     "BaseUrl",
     "ErrorType",
     "ErrorLevel",
     "BaseError",
     "ExceptionHandler",
-    "ExceptionType",
     "configure_logging",
     "disable_logging",
     "add_middleware",
@@ -45,4 +43,7 @@ __all__ = [
     "gen_random_id",
     "datetime_to_timestamp",
     "optional_import",
+    "exception_response",
+    "ExceptionDetail",
+    "registry",
 ]

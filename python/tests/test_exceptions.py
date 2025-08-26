@@ -6,7 +6,6 @@ from crypticorn_utils.exceptions import (
     BaseError,
     ExceptionDetail,
     ExceptionHandler,
-    ExceptionType,
 )
 from fastapi import FastAPI, HTTPException, Request, WebSocketException
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
@@ -41,27 +40,7 @@ class MockApiError(BaseError):
     )
 
 
-@pytest.fixture
-def mock_error_callback():
-    """Mock callback function for error retrieval"""
-
-    def callback(identifier: str) -> MockApiError:
-        return MockApiError.from_identifier(identifier)
-
-    return callback
-
-
-@pytest.fixture
-def exception_handler(mock_error_callback):
-    """Create an ExceptionHandler instance for testing"""
-    return ExceptionHandler(callback=mock_error_callback)
-
-
-@pytest.fixture
-def websocket_exception_handler(mock_error_callback):
-    """Create a WebSocket ExceptionHandler instance for testing"""
-    return ExceptionHandler(callback=mock_error_callback, type=ExceptionType.WEBSOCKET)
-
+handler = ExceptionHandler(callback=MockApiError.from_identifier)
 
 @pytest.fixture
 def mock_request():
@@ -100,16 +79,6 @@ class TestErrorEnums:
         expected_values = {"error", "info", "success", "warning"}
         actual_values = {error_level.value for error_level in ErrorLevel}
         assert actual_values == expected_values
-
-
-class TestExceptionType:
-    """Test cases for ExceptionType enum"""
-
-    def test_exception_type_values(self):
-        """Test ExceptionType enum values"""
-        assert ExceptionType.HTTP == "http"
-        assert ExceptionType.WEBSOCKET == "websocket"
-
 
 class TestExceptionDetail:
     """Test cases for ExceptionDetail model"""
@@ -229,23 +198,13 @@ class TestBaseError:
 class TestExceptionHandler:
     """Test cases for ExceptionHandler class"""
 
-    def test_exception_handler_initialization(self, mock_error_callback):
+    def test_exception_handler_initialization(self):
         """Test ExceptionHandler initialization"""
-        handler = ExceptionHandler(callback=mock_error_callback)
-        assert handler.callback == mock_error_callback
-        assert handler.type == ExceptionType.HTTP
+        assert handler.callback == MockApiError.from_identifier
 
-    def test_exception_handler_websocket_initialization(self, mock_error_callback):
-        """Test ExceptionHandler initialization with WebSocket type"""
-        handler = ExceptionHandler(
-            callback=mock_error_callback, type=ExceptionType.WEBSOCKET
-        )
-        assert handler.callback == mock_error_callback
-        assert handler.type == ExceptionType.WEBSOCKET
-
-    def test_build_http_exception(self, exception_handler):
+    def test_build_http_exception(self):
         """Test building HTTP exception"""
-        exception = exception_handler.build_exception("test_error")
+        exception = handler.build_exception("test_error")
 
         assert isinstance(exception, HTTPException)
         assert exception.status_code == 400
@@ -254,9 +213,9 @@ class TestExceptionHandler:
         assert exception.detail["level"] == "warning"
         assert exception.detail["status_code"] == 400
 
-    def test_build_websocket_exception(self, websocket_exception_handler):
+    def test_build_websocket_exception(self):
         """Test building WebSocket exception"""
-        exception = websocket_exception_handler.build_exception("test_error")
+        exception = handler.build_exception("test_error", type='websocket')
 
         assert isinstance(exception, WebSocketException)
         assert exception.code == 400
@@ -264,9 +223,9 @@ class TestExceptionHandler:
         assert exception.reason["type"] == "user error"
         assert exception.reason["level"] == "warning"
 
-    def test_build_exception_with_message(self, exception_handler):
+    def test_build_exception_with_message(self):
         """Test building exception with custom message"""
-        exception = exception_handler.build_exception(
+        exception = handler.build_exception(
             "test_error", message="Custom message"
         )
 
@@ -274,28 +233,28 @@ class TestExceptionHandler:
         assert exception.detail["message"] == "Custom message"
         assert exception.detail["code"] == "test_error"
 
-    def test_build_exception_with_headers(self, exception_handler):
+    def test_build_exception_with_headers(self):
         """Test building HTTP exception with headers"""
         headers = {"X-Custom-Header": "value"}
-        exception = exception_handler.build_exception("test_error", headers=headers)
+        exception = handler.build_exception("test_error", headers=headers)
 
         assert isinstance(exception, HTTPException)
         assert exception.headers == headers
 
-    def test_build_exception_with_details(self, exception_handler):
+    def test_build_exception_with_details(self):
         """Test building exception with additional details"""
         details = {"field": "value", "extra": "info"}
-        exception = exception_handler.build_exception("test_error", details=details)
+        exception = handler.build_exception("test_error", details=details)
 
         assert isinstance(exception, HTTPException)
         assert exception.detail["details"] == details
 
-    def test_build_exception_all_parameters(self, exception_handler):
+    def test_build_exception_all_parameters(self):
         """Test building exception with all parameters"""
         headers = {"X-Custom": "header"}
         details = {"extra": "details"}
 
-        exception = exception_handler.build_exception(
+        exception = handler.build_exception(
             "test_error", message="Custom message", headers=headers, details=details
         )
 
@@ -311,11 +270,11 @@ class TestExceptionHandlerMethods:
     """Test cases for ExceptionHandler exception handling methods"""
 
     @pytest.mark.asyncio
-    async def test_general_handler(self, mock_request):
+    async def test_general_handler(self):
         """Test general exception handler"""
         test_exception = Exception("Test error")
 
-        response = await ExceptionHandler._general_handler(mock_request, test_exception)
+        response = await handler._general_handler(mock_request, test_exception)
 
         assert isinstance(response, JSONResponse)
         assert response.status_code == 500
@@ -327,12 +286,12 @@ class TestExceptionHandlerMethods:
         assert "server error" in content
 
     @pytest.mark.asyncio
-    async def test_request_validation_handler(self, mock_request):
+    async def test_request_validation_handler(self):
         """Test request validation error handler"""
         # Create a mock RequestValidationError
         validation_error = RequestValidationError(errors=[])
 
-        response = await ExceptionHandler._request_validation_handler(
+        response = await handler._request_validation_handler(
             mock_request, validation_error
         )
 
@@ -345,12 +304,12 @@ class TestExceptionHandlerMethods:
         assert "user error" in content
 
     @pytest.mark.asyncio
-    async def test_response_validation_handler(self, mock_request):
+    async def test_response_validation_handler(self):
         """Test response validation error handler"""
         # Create a mock ResponseValidationError
         validation_error = ResponseValidationError(errors=[])
 
-        response = await ExceptionHandler._response_validation_handler(
+        response = await handler._response_validation_handler(
             mock_request, validation_error
         )
 
@@ -363,7 +322,7 @@ class TestExceptionHandlerMethods:
         assert "user error" in content
 
     @pytest.mark.asyncio
-    async def test_http_handler(self, mock_request):
+    async def test_http_handler(self):
         """Test HTTP exception handler"""
         http_exception = HTTPException(
             status_code=404,
@@ -371,7 +330,7 @@ class TestExceptionHandlerMethods:
             headers={"X-Custom": "header"},
         )
 
-        response = await ExceptionHandler._http_handler(mock_request, http_exception)
+        response = await handler._http_handler(mock_request, http_exception)
 
         assert isinstance(response, JSONResponse)
         assert response.status_code == 404
@@ -382,14 +341,14 @@ class TestExceptionHandlerMethods:
         assert "not_found" in content
         assert "Resource not found" in content
 
-    def test_register_exception_handlers(self, exception_handler):
+    def test_register_exception_handlers(self):
         """Test registering exception handlers with FastAPI app"""
         app = FastAPI()
 
         # Mock the add_exception_handler method
         app.add_exception_handler = Mock()
 
-        exception_handler.register_exception_handlers(app)
+        handler.register_exception_handlers(app)
 
         # Verify all exception handlers were registered
         assert app.add_exception_handler.call_count == 4
@@ -407,10 +366,10 @@ class TestExceptionHandlerMethods:
 class TestIntegrationScenarios:
     """Integration test scenarios"""
 
-    def test_complete_error_flow(self, exception_handler):
+    def test_complete_error_flow(self):
         """Test complete error handling flow"""
         # Build exception
-        exception = exception_handler.build_exception(
+        exception = handler.build_exception(
             "not_found", message="User not found", details={"user_id": 123}
         )
 
@@ -423,9 +382,9 @@ class TestIntegrationScenarios:
         assert exception.detail["level"] == "error"
         assert exception.detail["details"]["user_id"] == 123
 
-    def test_websocket_error_flow(self, websocket_exception_handler):
+    def test_websocket_error_flow(self):
         """Test WebSocket error handling flow"""
-        exception = websocket_exception_handler.build_exception(
+        exception = handler.build_exception(
             "unknown_error", message="Internal server error"
         )
 

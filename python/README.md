@@ -13,6 +13,20 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v1.0.0-rc.3 (2025-08-26)
+
+### Features
+
+- Export more classes in init, fix bug in exception handling, remove enums
+  ([`4cd659b`](https://github.com/crypticorn-ai/util-libraries/commit/4cd659b4b43fd1231ffc1c2a4dfc6023c691fa7d))
+
+### Refactoring
+
+- Remove partial_model decorator and update documentation references
+  ([#5](https://github.com/crypticorn-ai/util-libraries/pull/5),
+  [`48bad3d`](https://github.com/crypticorn-ai/util-libraries/commit/48bad3dd6a3b01c9e402d3aee420a04bc0076065))
+
+
 ## v1.0.0-rc.2 (2025-07-31)
 
 ### Bug Fixes

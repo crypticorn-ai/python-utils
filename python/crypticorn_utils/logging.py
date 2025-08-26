@@ -11,7 +11,7 @@ from typing import Optional
 from crypticorn_utils.ansi_colors import AnsiColors as C
 
 
-class LogLevel(StrEnum):
+class _LogLevel(StrEnum):
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -49,7 +49,7 @@ class _CustomFormatter(logging.Formatter):
         super().__init__(*args, **kwargs)
 
     def format(self, record):
-        color = LogLevel.get_color(record.levelname)
+        color = _LogLevel.get_color(record.levelname)
         record.levelcolor = color
         return super().format(record)
 
@@ -81,7 +81,7 @@ def configure_logging(
     """
     logger = logging.getLogger(name) if name else logging.getLogger()
 
-    if logger.handlers:  # clear existing handlers to avoid duplicates
+    if logger.hasHandlers():  # clear existing handlers to avoid duplicates
         logger.handlers.clear()
 
     logger.setLevel(min(stdout_level, file_level))  # set to most verbose level

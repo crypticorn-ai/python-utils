@@ -23,7 +23,7 @@ from fastapi.security import (
 from typing_extensions import Annotated
 
 
-class AuthErrorCodes(StrEnum):
+class _AuthErrorCodes(StrEnum):
     INVALID_API_KEY = "invalid_api_key"
     EXPIRED_API_KEY = "expired_api_key"
     INVALID_BEARER = "invalid_bearer"
@@ -34,58 +34,58 @@ class AuthErrorCodes(StrEnum):
     UNKNOWN_ERROR = "unknown_error"
 
 
-class AuthError(BaseError):
+class _AuthError(BaseError):
     INVALID_API_KEY = (
-        AuthErrorCodes.INVALID_API_KEY,
+        _AuthErrorCodes.INVALID_API_KEY,
         ErrorType.USER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     INVALID_BASIC_AUTH = (
-        AuthErrorCodes.INVALID_BASIC_AUTH,
+        _AuthErrorCodes.INVALID_BASIC_AUTH,
         ErrorType.USER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     INVALID_BEARER = (
-        AuthErrorCodes.INVALID_BEARER,
+        _AuthErrorCodes.INVALID_BEARER,
         ErrorType.USER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     EXPIRED_API_KEY = (
-        AuthErrorCodes.EXPIRED_API_KEY,
+        _AuthErrorCodes.EXPIRED_API_KEY,
         ErrorType.USER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     EXPIRED_BEARER = (
-        AuthErrorCodes.EXPIRED_BEARER,
+        _AuthErrorCodes.EXPIRED_BEARER,
         ErrorType.USER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     NO_CREDENTIALS = (
-        AuthErrorCodes.NO_CREDENTIALS,
+        _AuthErrorCodes.NO_CREDENTIALS,
         ErrorType.USER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     INSUFFICIENT_SCOPES = (
-        AuthErrorCodes.INSUFFICIENT_SCOPES,
+        _AuthErrorCodes.INSUFFICIENT_SCOPES,
         ErrorType.USER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_403_FORBIDDEN,
         status.WS_1008_POLICY_VIOLATION,
     )
     UNKNOWN_ERROR = (
-        AuthErrorCodes.UNKNOWN_ERROR,
+        _AuthErrorCodes.UNKNOWN_ERROR,
         ErrorType.SERVER_ERROR,
         ErrorLevel.ERROR,
         status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -93,28 +93,28 @@ class AuthError(BaseError):
     )
 
 
-handler = ExceptionHandler(callback=AuthError.from_identifier)
+_handler = ExceptionHandler(callback=_AuthError.from_identifier)
 
-AUTHENTICATE_HEADER = "WWW-Authenticate"
-BEARER_AUTH_SCHEME = "Bearer"
-APIKEY_AUTH_SCHEME = "X-API-Key"
-BASIC_AUTH_SCHEME = "Basic"
+_AUTHENTICATE_HEADER = "WWW-Authenticate"
+_BEARER_AUTH_SCHEME = "Bearer"
+_APIKEY_AUTH_SCHEME = "X-API-Key"
+_BASIC_AUTH_SCHEME = "Basic"
 
 # Auth Schemes
-http_bearer = HTTPBearer(
+_http_bearer = HTTPBearer(
     bearerFormat="JWT",
     auto_error=False,
     description="The JWT to use for authentication.",
 )
 
-apikey_header = APIKeyHeader(
-    name=APIKEY_AUTH_SCHEME,
+_apikey_header = APIKeyHeader(
+    name=_APIKEY_AUTH_SCHEME,
     auto_error=False,
     description="The API key to use for authentication.",
 )
 
-http_basic = HTTPBasic(
-    scheme_name=BASIC_AUTH_SCHEME,
+_http_basic = HTTPBasic(
+    scheme_name=_BASIC_AUTH_SCHEME,
     auto_error=False,
     description="The username and password to use for authentication.",
 )
@@ -165,8 +165,8 @@ class AuthHandler:
         Checks if the required scopes are a subset of the user scopes.
         """
         if not set(api_scopes).issubset(user_scopes):
-            raise handler.build_exception(
-                AuthErrorCodes.INSUFFICIENT_SCOPES,
+            raise _handler.build_exception(
+                _AuthErrorCodes.INSUFFICIENT_SCOPES,
                 "Insufficient scopes to access this resource (required: "
                 + ", ".join(api_scopes)
                 + ")",
@@ -196,28 +196,28 @@ class AuthHandler:
             # Unfortunately, we cannot share the error messages defined in python/crypticorn/common/errors.py with the typescript client
             message = await self._extract_message(e)
             if message == "Invalid API key":
-                error = AuthErrorCodes.INVALID_API_KEY
+                error = _AuthErrorCodes.INVALID_API_KEY
             elif message == "API key expired":
-                error = AuthErrorCodes.EXPIRED_API_KEY
+                error = _AuthErrorCodes.EXPIRED_API_KEY
             elif message == "jwt expired":
-                error = AuthErrorCodes.EXPIRED_BEARER
+                error = _AuthErrorCodes.EXPIRED_BEARER
             elif message == "Invalid basic authentication credentials":
-                error = AuthErrorCodes.INVALID_BASIC_AUTH
+                error = _AuthErrorCodes.INVALID_BASIC_AUTH
             else:
                 message = "Invalid bearer token"
                 error = (
-                    AuthErrorCodes.INVALID_BEARER
+                    _AuthErrorCodes.INVALID_BEARER
                 )  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
-            return handler.build_exception(error, message)
+            return _handler.build_exception(error, message)
 
         elif isinstance(e, HTTPException):
             return e
         else:
-            return handler.build_exception(AuthErrorCodes.UNKNOWN_ERROR, str(e))
+            return _handler.build_exception(_AuthErrorCodes.UNKNOWN_ERROR, str(e))
 
     async def api_key_auth(
         self,
-        api_key: Annotated[Union[str, None], Depends(apikey_header)] = None,
+        api_key: Annotated[Union[str, None], Depends(_apikey_header)] = None,
         sec: SecurityScopes = SecurityScopes(),
     ) -> Verify200Response:
         """
@@ -230,17 +230,17 @@ class AuthHandler:
                 bearer=None, api_key=api_key, basic=None, sec=sec
             )
         except HTTPException as e:
-            raise handler.build_exception(
+            raise _handler.build_exception(
                 e.detail.get("code"),
                 e.detail.get("message"),
-                headers={AUTHENTICATE_HEADER: APIKEY_AUTH_SCHEME},
+                headers={_AUTHENTICATE_HEADER: _APIKEY_AUTH_SCHEME},
             )
 
     async def bearer_auth(
         self,
         bearer: Annotated[
             Union[HTTPAuthorizationCredentials, None],
-            Depends(http_bearer),
+            Depends(_http_bearer),
         ] = None,
         sec: SecurityScopes = SecurityScopes(),
     ) -> Verify200Response:
@@ -254,15 +254,15 @@ class AuthHandler:
                 bearer=bearer, api_key=None, basic=None, sec=sec
             )
         except HTTPException as e:
-            raise handler.build_exception(
+            raise _handler.build_exception(
                 e.detail.get("code"),
                 e.detail.get("message"),
-                headers={AUTHENTICATE_HEADER: BEARER_AUTH_SCHEME},
+                headers={_AUTHENTICATE_HEADER: _BEARER_AUTH_SCHEME},
             )
 
     async def basic_auth(
         self,
-        credentials: Annotated[Union[HTTPBasicCredentials, None], Depends(http_basic)],
+        credentials: Annotated[Union[HTTPBasicCredentials, None], Depends(_http_basic)],
     ) -> Verify200Response:
         """
         Verifies the basic authentication credentials. This authentication method should just be used in cases where JWT and API key authentication are not desired or not possible.
@@ -272,18 +272,18 @@ class AuthHandler:
                 basic=credentials, bearer=None, api_key=None, sec=None
             )
         except HTTPException as e:
-            raise handler.build_exception(
+            raise _handler.build_exception(
                 e.detail.get("code"),
                 e.detail.get("message"),
-                headers={AUTHENTICATE_HEADER: BASIC_AUTH_SCHEME},
+                headers={_AUTHENTICATE_HEADER: _BASIC_AUTH_SCHEME},
             )
 
     async def combined_auth(
         self,
         bearer: Annotated[
-            Union[HTTPAuthorizationCredentials, None], Depends(http_bearer)
+            Union[HTTPAuthorizationCredentials, None], Depends(_http_bearer)
         ] = None,
-        api_key: Annotated[Union[str, None], Depends(apikey_header)] = None,
+        api_key: Annotated[Union[str, None], Depends(_apikey_header)] = None,
         sec: SecurityScopes = SecurityScopes(),
     ) -> Verify200Response:
         """
@@ -297,21 +297,21 @@ class AuthHandler:
                 basic=None, bearer=bearer, api_key=api_key, sec=sec
             )
         except HTTPException as e:
-            raise handler.build_exception(
+            raise _handler.build_exception(
                 e.detail.get("code"),
                 e.detail.get("message"),
                 headers={
-                    AUTHENTICATE_HEADER: f"{BEARER_AUTH_SCHEME}, {APIKEY_AUTH_SCHEME}"
+                    _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}"
                 },
             )
 
     async def full_auth(
         self,
-        basic: Annotated[Union[HTTPBasicCredentials, None], Depends(http_basic)] = None,
+        basic: Annotated[Union[HTTPBasicCredentials, None], Depends(_http_basic)] = None,
         bearer: Annotated[
-            Union[HTTPAuthorizationCredentials, None], Depends(http_bearer)
+            Union[HTTPAuthorizationCredentials, None], Depends(_http_bearer)
         ] = None,
-        api_key: Annotated[Union[str, None], Depends(apikey_header)] = None,
+        api_key: Annotated[Union[str, None], Depends(_apikey_header)] = None,
         sec: SecurityScopes = SecurityScopes(),
     ) -> Verify200Response:
         """
@@ -352,11 +352,11 @@ class AuthHandler:
         if first_error:
             raise first_error
         else:
-            raise handler.build_exception(
-                AuthErrorCodes.NO_CREDENTIALS,
+            raise _handler.build_exception(
+                _AuthErrorCodes.NO_CREDENTIALS,
                 "No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
                 headers={
-                    AUTHENTICATE_HEADER: f"{BEARER_AUTH_SCHEME}, {APIKEY_AUTH_SCHEME}, {BASIC_AUTH_SCHEME}"
+                    _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}, {_BASIC_AUTH_SCHEME}"
                 },
             )
 

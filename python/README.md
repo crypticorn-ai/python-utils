@@ -13,6 +13,14 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v1.0.0-rc.4 (2025-08-27)
+
+### Bug Fixes
+
+- Pass additional arguments as kwargs to .build_exception
+  ([`627f88e`](https://github.com/crypticorn-ai/util-libraries/commit/627f88ee35e19770e19e603f7891588bcae9f07e))
+
+
 ## v1.0.0-rc.3 (2025-08-26)
 
 ### Features

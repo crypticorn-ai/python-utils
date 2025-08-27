@@ -167,7 +167,7 @@ class AuthHandler:
         if not set(api_scopes).issubset(user_scopes):
             raise _handler.build_exception(
                 _AuthErrorCodes.INSUFFICIENT_SCOPES,
-                "Insufficient scopes to access this resource (required: "
+                message="Insufficient scopes to access this resource (required: "
                 + ", ".join(api_scopes)
                 + ")",
             )
@@ -208,12 +208,12 @@ class AuthHandler:
                 error = (
                     _AuthErrorCodes.INVALID_BEARER
                 )  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
-            return _handler.build_exception(error, message)
+            return _handler.build_exception(error, message=message)
 
         elif isinstance(e, HTTPException):
             return e
         else:
-            return _handler.build_exception(_AuthErrorCodes.UNKNOWN_ERROR, str(e))
+            return _handler.build_exception(_AuthErrorCodes.UNKNOWN_ERROR, message=str(e))
 
     async def api_key_auth(
         self,
@@ -232,7 +232,7 @@ class AuthHandler:
         except HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
-                e.detail.get("message"),
+                message=e.detail.get("message"),
                 headers={_AUTHENTICATE_HEADER: _APIKEY_AUTH_SCHEME},
             )
 
@@ -256,7 +256,7 @@ class AuthHandler:
         except HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
-                e.detail.get("message"),
+                message=e.detail.get("message"),
                 headers={_AUTHENTICATE_HEADER: _BEARER_AUTH_SCHEME},
             )
 
@@ -274,7 +274,7 @@ class AuthHandler:
         except HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
-                e.detail.get("message"),
+                message=e.detail.get("message"),
                 headers={_AUTHENTICATE_HEADER: _BASIC_AUTH_SCHEME},
             )
 
@@ -299,7 +299,7 @@ class AuthHandler:
         except HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
-                e.detail.get("message"),
+                message=e.detail.get("message"),
                 headers={
                     _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}"
                 },
@@ -354,7 +354,7 @@ class AuthHandler:
         else:
             raise _handler.build_exception(
                 _AuthErrorCodes.NO_CREDENTIALS,
-                "No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
+                message="No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
                 headers={
                     _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}, {_BASIC_AUTH_SCHEME}"
                 },

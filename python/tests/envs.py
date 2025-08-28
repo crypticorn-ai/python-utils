@@ -6,7 +6,7 @@ import time
 import jwt
 from crypticorn import AsyncClient
 from crypticorn.auth import CreateApiKeyRequest
-from crypticorn_utils.enums import BaseUrl
+from crypticorn_utils.types import BaseUrl
 from crypticorn_utils.utils import gen_random_id
 from dotenv import load_dotenv
 

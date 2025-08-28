@@ -1,14 +1,11 @@
 import json
-from enum import StrEnum
-from typing import Union
+from typing import Literal, Union
 
 from crypticorn.auth import AuthClient, Configuration, Verify200Response
 from crypticorn.auth.client.exceptions import ApiException
-from crypticorn_utils.enums import BaseUrl
+from crypticorn_utils.types import BaseUrl
 from crypticorn_utils.exceptions import (
     BaseError,
-    ErrorLevel,
-    ErrorType,
     ExceptionHandler,
 )
 from fastapi import Depends, HTTPException, Query, status
@@ -22,78 +19,78 @@ from fastapi.security import (
 )
 from typing_extensions import Annotated
 
+_AUTH_ERROR_CODES = Literal[
+    "invalid_api_key",
+    "expired_api_key",
+    "invalid_bearer",
+    "expired_bearer",
+    "invalid_basic_auth",
+    "no_credentials",
+    "insufficient_scopes",
+    "unknown_error",
+]
 
-class _AuthErrorCodes(StrEnum):
-    INVALID_API_KEY = "invalid_api_key"
-    EXPIRED_API_KEY = "expired_api_key"
-    INVALID_BEARER = "invalid_bearer"
-    EXPIRED_BEARER = "expired_bearer"
-    INVALID_BASIC_AUTH = "invalid_basic_auth"
-    NO_CREDENTIALS = "no_credentials"
-    INSUFFICIENT_SCOPES = "insufficient_scopes"
-    UNKNOWN_ERROR = "unknown_error"
 
-
-class _AuthError(BaseError):
-    INVALID_API_KEY = (
-        _AuthErrorCodes.INVALID_API_KEY,
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
+class _AuthError:
+    INVALID_API_KEY = BaseError[_AUTH_ERROR_CODES](
+        "invalid_api_key",
+        "user error",
+        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
-    INVALID_BASIC_AUTH = (
-        _AuthErrorCodes.INVALID_BASIC_AUTH,
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
+    INVALID_BASIC_AUTH = BaseError[_AUTH_ERROR_CODES](
+        "invalid_basic_auth",
+        "user error",
+        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
-    INVALID_BEARER = (
-        _AuthErrorCodes.INVALID_BEARER,
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
+    INVALID_BEARER = BaseError[_AUTH_ERROR_CODES](
+        "invalid_bearer",
+        "user error",
+        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
-    EXPIRED_API_KEY = (
-        _AuthErrorCodes.EXPIRED_API_KEY,
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
+    EXPIRED_API_KEY = BaseError[_AUTH_ERROR_CODES](
+        "expired_api_key",
+        "user error",
+        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
-    EXPIRED_BEARER = (
-        _AuthErrorCodes.EXPIRED_BEARER,
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
+    EXPIRED_BEARER = BaseError[_AUTH_ERROR_CODES](
+        "expired_bearer",
+        "user error",
+        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
-    NO_CREDENTIALS = (
-        _AuthErrorCodes.NO_CREDENTIALS,
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
+    NO_CREDENTIALS = BaseError[_AUTH_ERROR_CODES](
+        "no_credentials",
+        "user error",
+        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
-    INSUFFICIENT_SCOPES = (
-        _AuthErrorCodes.INSUFFICIENT_SCOPES,
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
+    INSUFFICIENT_SCOPES = BaseError[_AUTH_ERROR_CODES](
+        "insufficient_scopes",
+        "user error",
+        "error",
         status.HTTP_403_FORBIDDEN,
         status.WS_1008_POLICY_VIOLATION,
     )
-    UNKNOWN_ERROR = (
-        _AuthErrorCodes.UNKNOWN_ERROR,
-        ErrorType.SERVER_ERROR,
-        ErrorLevel.ERROR,
+    UNKNOWN_ERROR = BaseError[_AUTH_ERROR_CODES](
+        "unknown_error",
+        "server error",
+        "error",
         status.HTTP_500_INTERNAL_SERVER_ERROR,
         status.WS_1011_INTERNAL_ERROR,
     )
 
 
-_handler = ExceptionHandler(callback=_AuthError.from_identifier)
+_handler = ExceptionHandler[_AUTH_ERROR_CODES](callback=BaseError.from_identifier)
 
 _AUTHENTICATE_HEADER = "WWW-Authenticate"
 _BEARER_AUTH_SCHEME = "Bearer"
@@ -166,7 +163,7 @@ class AuthHandler:
         """
         if not set(api_scopes).issubset(user_scopes):
             raise _handler.build_exception(
-                _AuthErrorCodes.INSUFFICIENT_SCOPES,
+                "insufficient_scopes",
                 message="Insufficient scopes to access this resource (required: "
                 + ", ".join(api_scopes)
                 + ")",
@@ -196,24 +193,22 @@ class AuthHandler:
             # Unfortunately, we cannot share the error messages defined in python/crypticorn/common/errors.py with the typescript client
             message = await self._extract_message(e)
             if message == "Invalid API key":
-                error = _AuthErrorCodes.INVALID_API_KEY
+                error = "invalid_api_key"
             elif message == "API key expired":
-                error = _AuthErrorCodes.EXPIRED_API_KEY
+                error = "expired_api_key"
             elif message == "jwt expired":
-                error = _AuthErrorCodes.EXPIRED_BEARER
+                error = "expired_bearer"
             elif message == "Invalid basic authentication credentials":
-                error = _AuthErrorCodes.INVALID_BASIC_AUTH
+                error = "invalid_basic_auth"
             else:
                 message = "Invalid bearer token"
-                error = (
-                    _AuthErrorCodes.INVALID_BEARER
-                )  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
+                error = "invalid_bearer"  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
             return _handler.build_exception(error, message=message)
 
         elif isinstance(e, HTTPException):
             return e
         else:
-            return _handler.build_exception(_AuthErrorCodes.UNKNOWN_ERROR, message=str(e))
+            return _handler.build_exception("unknown_error", message=str(e))
 
     async def api_key_auth(
         self,
@@ -307,7 +302,9 @@ class AuthHandler:
 
     async def full_auth(
         self,
-        basic: Annotated[Union[HTTPBasicCredentials, None], Depends(_http_basic)] = None,
+        basic: Annotated[
+            Union[HTTPBasicCredentials, None], Depends(_http_basic)
+        ] = None,
         bearer: Annotated[
             Union[HTTPAuthorizationCredentials, None], Depends(_http_bearer)
         ] = None,
@@ -348,7 +345,7 @@ class AuthHandler:
             raise last_error
         else:
             raise _handler.build_exception(
-                _AuthErrorCodes.NO_CREDENTIALS,
+                "no_credentials",
                 message="No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
                 headers={
                     _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}, {_BASIC_AUTH_SCHEME}"

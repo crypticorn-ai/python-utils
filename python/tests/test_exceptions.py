@@ -1,46 +1,50 @@
+from typing import Literal
 from unittest.mock import Mock
 
 import pytest
-from crypticorn_utils.errors import ErrorLevel, ErrorType
 from crypticorn_utils.exceptions import (
     BaseError,
-    ExceptionDetail,
     ExceptionHandler,
+    _ExceptionDetail,
 )
 from fastapi import FastAPI, HTTPException, Request, WebSocketException
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
+# Define error codes as a Literal type for testing
+TestErrorCodes = Literal["unknown_error", "test_error", "not_found"]
+
 
 # Test fixtures and mock classes
-class MockApiError(BaseError):
+class MockApiError:
     """Mock API error for testing"""
 
-    UNKNOWN_ERROR = (
-        "unknown_error",
-        ErrorType.SERVER_ERROR,
-        ErrorLevel.ERROR,
-        500,
-        1011,
+    UNKNOWN_ERROR = BaseError[TestErrorCodes](
+        identifier="unknown_error",
+        type="server error",
+        level="error",
+        http_code=500,
+        websocket_code=1011,
     )
-    TEST_ERROR = (
-        "test_error",
-        ErrorType.USER_ERROR,
-        ErrorLevel.WARNING,
-        400,
-        1007,
+    TEST_ERROR = BaseError[TestErrorCodes](
+        identifier="test_error",
+        type="user error",
+        level="warning",
+        http_code=400,
+        websocket_code=1007,
     )
-    NOT_FOUND = (
-        "not_found",
-        ErrorType.USER_ERROR,
-        ErrorLevel.ERROR,
-        404,
-        1008,
+    NOT_FOUND = BaseError[TestErrorCodes](
+        identifier="not_found",
+        type="user error",
+        level="error",
+        http_code=404,
+        websocket_code=1008,
     )
 
 
-handler = ExceptionHandler(callback=MockApiError.from_identifier)
+handler = ExceptionHandler[TestErrorCodes](callback=BaseError.from_identifier)
+
 
 @pytest.fixture
 def mock_request():
@@ -50,87 +54,57 @@ def mock_request():
     request.url.path = "/test"
     return request
 
-
-class TestErrorEnums:
-    """Test cases for error enums from errors.py"""
-
-    def test_error_type_values(self):
-        """Test ErrorType enum values"""
-        assert ErrorType.USER_ERROR == "user error"
-        assert ErrorType.EXCHANGE_ERROR == "exchange error"
-        assert ErrorType.SERVER_ERROR == "server error"
-        assert ErrorType.NO_ERROR == "no error"
-
-    def test_error_level_values(self):
-        """Test ErrorLevel enum values"""
-        assert ErrorLevel.ERROR == "error"
-        assert ErrorLevel.INFO == "info"
-        assert ErrorLevel.SUCCESS == "success"
-        assert ErrorLevel.WARNING == "warning"
-
-    def test_error_type_enum_completeness(self):
-        """Test that all expected ErrorType values are present"""
-        expected_values = {"user error", "exchange error", "server error", "no error"}
-        actual_values = {error_type.value for error_type in ErrorType}
-        assert actual_values == expected_values
-
-    def test_error_level_enum_completeness(self):
-        """Test that all expected ErrorLevel values are present"""
-        expected_values = {"error", "info", "success", "warning"}
-        actual_values = {error_level.value for error_level in ErrorLevel}
-        assert actual_values == expected_values
-
 class TestExceptionDetail:
     """Test cases for ExceptionDetail model"""
 
     def test_exception_detail_creation(self):
         """Test creating an ExceptionDetail instance"""
-        detail = ExceptionDetail(
+        detail = _ExceptionDetail[TestErrorCodes](
             code="test_error",
-            type=ErrorType.USER_ERROR,
-            level=ErrorLevel.WARNING,
+            type="user error",
+            level="warning",
             status_code=400,
         )
 
         assert detail.code == "test_error"
-        assert detail.type == ErrorType.USER_ERROR
-        assert detail.level == ErrorLevel.WARNING
+        assert detail.type == "user error"
+        assert detail.level == "warning"
         assert detail.status_code == 400
         assert detail.message is None
         assert detail.details is None
 
     def test_exception_detail_with_optional_fields(self):
         """Test creating ExceptionDetail with all fields"""
-        detail = ExceptionDetail(
+        detail = _ExceptionDetail[TestErrorCodes](
             message="Test error message",
             code="test_error",
-            type=ErrorType.USER_ERROR,
-            level=ErrorLevel.ERROR,
+            type="user error",
+            level="error",
             status_code=400,
             details={"extra": "info"},
         )
 
         assert detail.message == "Test error message"
         assert detail.code == "test_error"
-        assert detail.type == ErrorType.USER_ERROR
-        assert detail.level == ErrorLevel.ERROR
+        assert detail.type == "user error"
+        assert detail.level == "error"
         assert detail.status_code == 400
         assert detail.details == {"extra": "info"}
 
     def test_exception_detail_model_dump(self):
         """Test ExceptionDetail model serialization"""
-        detail = ExceptionDetail(
+        detail = _ExceptionDetail[TestErrorCodes](
             message="Test message",
-            code="test_code",
-            type=ErrorType.SERVER_ERROR,
-            level=ErrorLevel.ERROR,
+            code="test_error",
+            type="server error",
+            level="error",
             status_code=500,
         )
 
         dumped = detail.model_dump(mode="json")
         expected = {
             "message": "Test message",
-            "code": "test_code",
+            "code": "test_error",
             "type": "server error",
             "level": "error",
             "status_code": 500,
@@ -142,10 +116,10 @@ class TestExceptionDetail:
     def test_exception_detail_validation_error(self):
         """Test ExceptionDetail validation with invalid data"""
         with pytest.raises(ValidationError):
-            ExceptionDetail(
+            _ExceptionDetail[TestErrorCodes](
                 code="test_error",
                 type="invalid_type",  # Invalid type
-                level=ErrorLevel.ERROR,
+                level="error",
                 status_code=400,
             )
 
@@ -158,39 +132,41 @@ class TestBaseError:
         error = MockApiError.TEST_ERROR
 
         assert error.identifier == "test_error"
-        assert error.type == ErrorType.USER_ERROR
-        assert error.level == ErrorLevel.WARNING
+        assert error.type == "user error"
+        assert error.level == "warning"
         assert error.http_code == 400
         assert error.websocket_code == 1007
 
     def test_base_error_from_identifier(self):
         """Test BaseError.from_identifier method"""
-        error = MockApiError.from_identifier("test_error")
+        error = BaseError.from_identifier("test_error")
         assert error == MockApiError.TEST_ERROR
 
-        error = MockApiError.from_identifier("unknown_error")
+        error = BaseError.from_identifier("unknown_error")
         assert error == MockApiError.UNKNOWN_ERROR
 
     def test_base_error_from_identifier_not_found(self):
         """Test BaseError.from_identifier with non-existent identifier"""
-        with pytest.raises(StopIteration):
-            MockApiError.from_identifier("non_existent_error")
+        with pytest.raises(
+            ValueError, match="Unknown error identifier: non_existent_error"
+        ):
+            BaseError.from_identifier("non_existent_error")
 
     def test_all_mock_api_errors(self):
         """Test all mock API error definitions"""
         # Test UNKNOWN_ERROR
         error = MockApiError.UNKNOWN_ERROR
         assert error.identifier == "unknown_error"
-        assert error.type == ErrorType.SERVER_ERROR
-        assert error.level == ErrorLevel.ERROR
+        assert error.type == "server error"
+        assert error.level == "error"
         assert error.http_code == 500
         assert error.websocket_code == 1011
 
         # Test NOT_FOUND
         error = MockApiError.NOT_FOUND
         assert error.identifier == "not_found"
-        assert error.type == ErrorType.USER_ERROR
-        assert error.level == ErrorLevel.ERROR
+        assert error.type == "user error"
+        assert error.level == "error"
         assert error.http_code == 404
         assert error.websocket_code == 1008
 
@@ -200,7 +176,7 @@ class TestExceptionHandler:
 
     def test_exception_handler_initialization(self):
         """Test ExceptionHandler initialization"""
-        assert handler.callback == MockApiError.from_identifier
+        assert handler.callback == BaseError.from_identifier
 
     def test_build_http_exception(self):
         """Test building HTTP exception"""
@@ -215,7 +191,7 @@ class TestExceptionHandler:
 
     def test_build_websocket_exception(self):
         """Test building WebSocket exception"""
-        exception = handler.build_exception("test_error", type='websocket')
+        exception = handler.build_exception("test_error", type="websocket")
 
         assert isinstance(exception, WebSocketException)
         assert exception.code == 400
@@ -225,9 +201,7 @@ class TestExceptionHandler:
 
     def test_build_exception_with_message(self):
         """Test building exception with custom message"""
-        exception = handler.build_exception(
-            "test_error", message="Custom message"
-        )
+        exception = handler.build_exception("test_error", message="Custom message")
 
         assert isinstance(exception, HTTPException)
         assert exception.detail["message"] == "Custom message"
@@ -385,7 +359,7 @@ class TestIntegrationScenarios:
     def test_websocket_error_flow(self):
         """Test WebSocket error handling flow"""
         exception = handler.build_exception(
-            "unknown_error", message="Internal server error"
+            "unknown_error", message="Internal server error", type="websocket"
         )
 
         # Verify WebSocket exception properties
@@ -399,17 +373,22 @@ class TestIntegrationScenarios:
     def test_error_callback_integration(self):
         """Test integration between ExceptionHandler and BaseError"""
 
-        def callback(identifier: str) -> MockApiError:
-            return MockApiError.from_identifier(identifier)
+        def callback(identifier: TestErrorCodes) -> BaseError[TestErrorCodes]:
+            return BaseError.from_identifier(identifier)
 
-        handler = ExceptionHandler(callback=callback)
+        test_handler = ExceptionHandler[TestErrorCodes](callback=callback)
 
         # Test with each mock error
-        for mock_error in MockApiError:
-            exception = handler.build_exception(mock_error.identifier)
+        test_errors = [
+            MockApiError.UNKNOWN_ERROR,
+            MockApiError.TEST_ERROR,
+            MockApiError.NOT_FOUND,
+        ]
+        for mock_error in test_errors:
+            exception = test_handler.build_exception(mock_error.identifier)
 
             assert isinstance(exception, HTTPException)
             assert exception.status_code == mock_error.http_code
             assert exception.detail["code"] == mock_error.identifier
-            assert exception.detail["type"] == mock_error.type.value
-            assert exception.detail["level"] == mock_error.level.value
+            assert exception.detail["type"] == mock_error.type
+            assert exception.detail["level"] == mock_error.level

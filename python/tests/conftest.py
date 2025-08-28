@@ -2,7 +2,7 @@ from typing import AsyncGenerator
 
 import pytest_asyncio
 from crypticorn_utils.auth import AuthHandler
-from crypticorn_utils.enums import BaseUrl
+from crypticorn_utils.types import BaseUrl
 from tests.envs import API_ENV
 
 

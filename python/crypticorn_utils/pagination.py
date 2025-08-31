@@ -69,7 +69,7 @@ class PaginationParams(BaseModel, Generic[T]):
     >>>     page_size: int = Field(default=5, description="The number of items per page")
     """
 
-    page: Optional[int] = Field(default=1, description="The current page number")
+    page: int = Field(default=1, description="The current page number")
     page_size: Annotated[int, Field(ge=1, le=100)] = Field(
         10, description="The number of items per page. Default is 10, max is 100."
     )

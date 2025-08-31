@@ -19,9 +19,6 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-[project.scripts]
-crypticorn_utils = "crypticorn_utils.cli.__main__:cli"
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["crypticorn_utils*"]
@@ -45,10 +42,9 @@ build_command = "pip install build && python -m build" # https://python-semantic
 
 [tool.semantic_release.changelog]
 mode = "update"
-insertion_flag = "<!-- changelog-insertion -->"
 
 [tool.semantic_release.changelog.default_templates]
-changelog_file = "README.md"
+changelog_file = "CHANGELOG.md"
 
 # https://python-semantic-release.readthedocs.io/en/latest/concepts/multibranch_releases.html#multibranch-releases
 [tool.semantic_release.branches.main]
@@ -71,9 +67,7 @@ prerelease = false
 
 
 [project.urls]
-Homepage = "https://crypticorn.com"
-Documentation = "https://docs.crypticorn.com"
-Dashboard = "https://app.crypticorn.com"
+Changelog = "https://github.com/crypticorn-ai/util-libraries/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["setuptools>=61.0"]

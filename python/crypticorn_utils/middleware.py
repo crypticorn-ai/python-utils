@@ -1,16 +1,16 @@
 import time
 from typing import Literal, Optional
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-
 from crypticorn_utils.metrics import (
     HTTP_REQUEST_DURATION,
     HTTP_REQUESTS_COUNT,
     REQUEST_SIZE,
     RESPONSE_SIZE,
 )
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
 
 # otherwise prometheus reqisters metrics twice, resulting in an exception
 class PrometheusMiddleware(BaseHTTPMiddleware):
@@ -75,7 +75,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def add_middleware(app: "FastAPI", include: Optional[list[Literal["metrics", "cors"]]] = None):
+def add_middleware(
+    app: "FastAPI", include: Optional[list[Literal["metrics", "cors"]]] = None
+):
     """
     Add middleware to the FastAPI app.
     :param app: The FastAPI app to add middleware to.

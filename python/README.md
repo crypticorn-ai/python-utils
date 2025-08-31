@@ -13,6 +13,14 @@ This module serves as a central place for providing utilities for our python bac
 
 <!-- changelog-insertion -->
 
+## v1.0.0-rc.5 (2025-08-28)
+
+### Features
+
+- Enhance exception handling with improved type safety and restructure imports (breaking)
+  ([`c58a5fe`](https://github.com/crypticorn-ai/util-libraries/commit/c58a5fe6fddcb857aedc3cab49473f7edfca66ac))
+
+
 ## v1.0.0-rc.4 (2025-08-27)
 
 ### Bug Fixes

@@ -1,6 +1,4 @@
-# CHANGELOG
-
-<!-- version list -->
+<!-- changelog-insertion -->
 
 ## v1.0.0-rc.6 (2025-08-31)
 

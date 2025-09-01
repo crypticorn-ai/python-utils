@@ -42,6 +42,7 @@ build_command = "pip install build && python -m build" # https://python-semantic
 
 [tool.semantic_release.changelog]
 mode = "update"
+insertion_flag = "<!-- changelog-insertion -->"
 
 [tool.semantic_release.changelog.default_templates]
 changelog_file = "CHANGELOG.md"

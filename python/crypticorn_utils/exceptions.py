@@ -17,7 +17,7 @@ from fastapi import HTTPException as FastAPIHTTPException
 from fastapi import Request, WebSocketException
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 _logger = logging.getLogger("crypticorn")
 
@@ -63,8 +63,9 @@ class _ExceptionDetail(BaseModel, Generic[_TErrorCodes]):
     status_code: int = Field(..., description="The HTTP status code")
     details: Any = Field(None, description="Additional details about the error")
 
-    class Config:
+    model_config = ConfigDict(
         title = "ExceptionDetail"
+    )
 
 
 @dataclass(frozen=True)

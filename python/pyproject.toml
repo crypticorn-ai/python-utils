@@ -40,12 +40,12 @@ build_command = "pip install build && python -m build" # https://python-semantic
 #[tool.semantic_release.changelog.exclude_commit_patterns]
 # Potentially exclude commit patterns from the changelog
 
-[tool.semantic_release.changelog]
-mode = "update"
-insertion_flag = "<!-- changelog-insertion -->"
+# [tool.semantic_release.changelog]
+# mode = "update"
+# insertion_flag = "<!-- changelog-insertion -->"
 
-[tool.semantic_release.changelog.default_templates]
-changelog_file = "CHANGELOG.md"
+# [tool.semantic_release.changelog.default_templates]
+# changelog_file = "CHANGELOG.md"
 
 # https://python-semantic-release.readthedocs.io/en/latest/concepts/multibranch_releases.html#multibranch-releases
 [tool.semantic_release.branches.main]

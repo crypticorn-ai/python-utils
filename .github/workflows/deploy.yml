@@ -93,6 +93,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
+          changelog: false # github releases are sufficient
 
       - name: Cleanup | Remove release, tag and commit on failure
         if: failure() && steps.release.outputs.tag != ''

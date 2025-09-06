@@ -295,7 +295,7 @@ class AuthHandler:
         This function is used for HTTP connections.
         """
         tokens = [bearer, api_key, basic]
-        last_error = None
+        first_error = None
         for token in tokens:
             try:
                 if token is None:
@@ -314,11 +314,14 @@ class AuthHandler:
                 return res
 
             except Exception as e:
-                last_error = await self._handle_exception(e)
+                # Store the first error, but continue trying other tokens
+                if first_error is None:
+                    first_error = await self._handle_exception(e)
                 continue
 
-        if last_error:
-            raise last_error
+        # If we get here, either no credentials were provided or all failed
+        if first_error:
+            raise first_error
         else:
             raise handler.build_exception(AuthErrorCodes.NO_CREDENTIALS, "No credentials provided. Check the WWW-Authenticate header for the available authentication methods.", headers={AUTHENTICATE_HEADER: f"{BEARER_AUTH_SCHEME}, {APIKEY_AUTH_SCHEME}, {BASIC_AUTH_SCHEME}"})
 

@@ -248,7 +248,7 @@ class AuthHandler:
         credentials: Annotated[Union[HTTPBasicCredentials, None], Depends(http_basic)],
     ) -> Verify200Response:
         """
-        Verifies the basic authentication credentials. This authentication method should just be used for special cases like /admin/metrics, where JWT and API key authentication are not desired or not possible.
+        Verifies the basic authentication credentials. This authentication method should just be used in cases where JWT and API key authentication are not desired or not possible.
         """
         try:
             return await self.full_auth(
@@ -267,7 +267,7 @@ class AuthHandler:
     ) -> Verify200Response:
         """
         Verifies the bearer token and/or API key and checks the scopes.
-        Returns early on the first successful verification, otherwise tries all available tokens.
+        Returns early on the first successful verification and raises the first error after all tokens are tried.
         Use this function if you want to allow access via either the bearer token or the API key.
         This function is used for HTTP connections.
         """
@@ -288,9 +288,11 @@ class AuthHandler:
         sec: SecurityScopes = SecurityScopes(),
     ) -> Verify200Response:
         """
-        IMPORTANT: combined_auth is sufficient for most use cases. This function adds basic auth to the mix, which is needed for external services like prometheus, but is not recommended for internal use.
+        IMPORTANT: combined_auth is sufficient for most use cases. 
+        
+        This function adds basic auth to the mix, which is needed for external services like prometheus, but is not recommended for internal use.
         Verifies the bearer token, API key and basic authentication credentials and checks the scopes.
-        Returns early on the first successful verification, otherwise tries all available tokens.
+        Returns early on the first successful verification and raises the first error after all tokens are tried.
         Use this function if you want to allow access via either the bearer token, the API key or the basic authentication credentials.
         This function is used for HTTP connections.
         """

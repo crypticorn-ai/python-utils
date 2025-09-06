@@ -4,6 +4,8 @@ from crypticorn_utils.exceptions import (
     BaseError,
     ExceptionHandler,
     get_exception_response,
+    HTTPException,
+    WebSocketException
 )
 from crypticorn_utils.logging import configure_logging, disable_logging
 from crypticorn_utils.metrics import registry
@@ -47,4 +49,6 @@ __all__ = [
     "BaseError",
     "get_exception_response",
     "registry",
+    "HTTPException",
+    "WebSocketException",
 ]

@@ -91,7 +91,7 @@ def add_middleware(
                 "http://localhost:5173",  # vite dev server
                 "http://localhost:4173",  # vite preview server
             ],
-            allow_origin_regex="^https:\/\/([a-zA-Z0-9-]+\.)*crypticorn\.(dev|com)\/?$",  # matches (multiple or no) subdomains of crypticorn.dev and crypticorn.com
+            allow_origin_regex=r"^https://([a-zA-Z0-9-]+\.)*crypticorn\.(dev|com)/?$",  # matches (multiple or no) subdomains of crypticorn.dev and crypticorn.com
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],

@@ -4,11 +4,11 @@ name: Test and Coverage
 
 on:
   pull_request:
-    branches: [main, dev, v1-dev, v1]
+    branches: [v0, v0-dev, v1-dev, v1]
   push:
     branches:
-      - main
-      - dev
+      - v0
+      - v0-dev
       - v1-dev
       - v1
 
@@ -18,7 +18,7 @@ permissions:
   pull-requests: write
 
 env:
-  API_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  API_ENV: ${{ (github.ref == 'refs/heads/v0' || github.ref == 'refs/heads/v1') && 'prod' || 'dev' }}
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:

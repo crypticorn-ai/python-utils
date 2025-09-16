@@ -1,10 +1,10 @@
-This module serves as a central place for providing utilities for our python backends.
+This module serves as a central place for providing utilities for our Python backends.
 
-- **Auth**: Authentication and authorization for APIs with API key and JWT bearer token support
-- **Enums**: Common enumerations for type safety and consistency
-- **Errors**: Comprehensive error handling system with HTTP exceptions and error content structures
-- **Exceptions**: Custom exception classes and error handling utilities
-- **Logging**: Logging configuration and utilities for consistent formatting
+- **Auth**: Authentication and authorization for APIs with API key, JWT bearer token, and basic auth support
+- **Exceptions**: Comprehensive error handling system with HTTP/WebSocket exceptions and standardized error responses
+- **Logging**: Logging configuration and utilities for consistent formatting across services
 - **Middleware**: API middleware components for request/response processing
-- **Pagination**: Utilities for paginated API responses and cursor-based pagination
-- **Utils**: General utility functions and helper methods
+- **Pagination**: Utilities for paginated API responses with cursor-based pagination, filtering, and sorting
+- **Metrics**: Prometheus metrics collection for HTTP requests, response times, and sizes
+- **Types**: Environment definitions (prod/dev/local/docker) and base URL management
+- **Utils**: General utility functions including random ID generation, datetime conversion, and optional imports

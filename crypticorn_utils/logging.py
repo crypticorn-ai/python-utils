@@ -8,7 +8,7 @@ from enum import StrEnum
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 
-from crypticorn_utils.ansi_colors import AnsiColors as C
+from .ansi_colors import AnsiColors as C
 
 
 class _LogLevel(StrEnum):

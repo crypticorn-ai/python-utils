@@ -1,13 +1,8 @@
 import json
-from typing import Literal, Union
+from typing import Literal, Union, cast
 
 from crypticorn.auth import AuthClient, Configuration, Verify200Response
 from crypticorn.auth.client.exceptions import ApiException
-from crypticorn_utils.types import BaseUrl
-from crypticorn_utils.exceptions import (
-    BaseError,
-    ExceptionHandler,
-)
 from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import (
     APIKeyHeader,
@@ -18,6 +13,12 @@ from fastapi.security import (
     SecurityScopes,
 )
 from typing_extensions import Annotated
+
+from .exceptions import (
+    BaseError,
+    ExceptionHandler,
+)
+from .types import BaseUrl
 
 _AUTH_ERROR_CODES = Literal[
     "invalid_api_key",
@@ -34,57 +35,41 @@ _AUTH_ERROR_CODES = Literal[
 class _AuthError:
     INVALID_API_KEY = BaseError[_AUTH_ERROR_CODES](
         "invalid_api_key",
-        "user error",
-        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     INVALID_BASIC_AUTH = BaseError[_AUTH_ERROR_CODES](
         "invalid_basic_auth",
-        "user error",
-        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     INVALID_BEARER = BaseError[_AUTH_ERROR_CODES](
         "invalid_bearer",
-        "user error",
-        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     EXPIRED_API_KEY = BaseError[_AUTH_ERROR_CODES](
         "expired_api_key",
-        "user error",
-        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     EXPIRED_BEARER = BaseError[_AUTH_ERROR_CODES](
         "expired_bearer",
-        "user error",
-        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     NO_CREDENTIALS = BaseError[_AUTH_ERROR_CODES](
         "no_credentials",
-        "user error",
-        "error",
         status.HTTP_401_UNAUTHORIZED,
         status.WS_1008_POLICY_VIOLATION,
     )
     INSUFFICIENT_SCOPES = BaseError[_AUTH_ERROR_CODES](
         "insufficient_scopes",
-        "user error",
-        "error",
         status.HTTP_403_FORBIDDEN,
         status.WS_1008_POLICY_VIOLATION,
     )
     UNKNOWN_ERROR = BaseError[_AUTH_ERROR_CODES](
         "unknown_error",
-        "server error",
-        "error",
         status.HTTP_500_INTERNAL_SERVER_ERROR,
         status.WS_1011_INTERNAL_ERROR,
     )
@@ -203,7 +188,9 @@ class AuthHandler:
             else:
                 message = "Invalid bearer token"
                 error = "invalid_bearer"  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
-            return _handler.build_exception(error, message=message)
+            return _handler.build_exception(
+                cast(_AUTH_ERROR_CODES, error), message=message
+            )
 
         elif isinstance(e, HTTPException):
             return e

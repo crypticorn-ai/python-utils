@@ -1,7 +1,8 @@
 import pytest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBasicCredentials
+
 from crypticorn_utils.auth import AuthHandler
 from crypticorn_utils.exceptions import HTTPException
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBasicCredentials
 from tests.envs import (
     ADMIN_SCOPES,
     EXPIRED_API_KEY,

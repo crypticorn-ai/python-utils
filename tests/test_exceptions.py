@@ -2,15 +2,16 @@ from typing import Literal
 from unittest.mock import Mock
 
 import pytest
+from fastapi import FastAPI, HTTPException, Request, WebSocketException
+from fastapi.exceptions import RequestValidationError, ResponseValidationError
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+
 from crypticorn_utils.exceptions import (
     BaseError,
     ExceptionHandler,
     _ExceptionDetail,
 )
-from fastapi import FastAPI, HTTPException, Request, WebSocketException
-from fastapi.exceptions import RequestValidationError, ResponseValidationError
-from fastapi.responses import JSONResponse
-from pydantic import ValidationError
 
 # Define error codes as a Literal type for testing
 TestErrorCodes = Literal["unknown_error", "test_error", "not_found"]
@@ -22,22 +23,16 @@ class MockApiError:
 
     UNKNOWN_ERROR = BaseError[TestErrorCodes](
         identifier="unknown_error",
-        type="server error",
-        level="error",
         http_code=500,
         websocket_code=1011,
     )
     TEST_ERROR = BaseError[TestErrorCodes](
         identifier="test_error",
-        type="user error",
-        level="warning",
         http_code=400,
         websocket_code=1007,
     )
     NOT_FOUND = BaseError[TestErrorCodes](
         identifier="not_found",
-        type="user error",
-        level="error",
         http_code=404,
         websocket_code=1008,
     )
@@ -54,6 +49,7 @@ def mock_request():
     request.url.path = "/test"
     return request
 
+
 class TestExceptionDetail:
     """Test cases for ExceptionDetail model"""
 
@@ -61,14 +57,10 @@ class TestExceptionDetail:
         """Test creating an ExceptionDetail instance"""
         detail = _ExceptionDetail[TestErrorCodes](
             code="test_error",
-            type="user error",
-            level="warning",
             status_code=400,
         )
 
         assert detail.code == "test_error"
-        assert detail.type == "user error"
-        assert detail.level == "warning"
         assert detail.status_code == 400
         assert detail.message is None
         assert detail.details is None
@@ -78,16 +70,12 @@ class TestExceptionDetail:
         detail = _ExceptionDetail[TestErrorCodes](
             message="Test error message",
             code="test_error",
-            type="user error",
-            level="error",
             status_code=400,
             details={"extra": "info"},
         )
 
         assert detail.message == "Test error message"
         assert detail.code == "test_error"
-        assert detail.type == "user error"
-        assert detail.level == "error"
         assert detail.status_code == 400
         assert detail.details == {"extra": "info"}
 
@@ -96,8 +84,6 @@ class TestExceptionDetail:
         detail = _ExceptionDetail[TestErrorCodes](
             message="Test message",
             code="test_error",
-            type="server error",
-            level="error",
             status_code=500,
         )
 
@@ -105,8 +91,6 @@ class TestExceptionDetail:
         expected = {
             "message": "Test message",
             "code": "test_error",
-            "type": "server error",
-            "level": "error",
             "status_code": 500,
             "details": None,
         }
@@ -117,9 +101,7 @@ class TestExceptionDetail:
         """Test ExceptionDetail validation with invalid data"""
         with pytest.raises(ValidationError):
             _ExceptionDetail[TestErrorCodes](
-                code="test_error",
-                type="invalid_type",  # Invalid type
-                level="error",
+                code="test_error_invalid",
                 status_code=400,
             )
 
@@ -132,8 +114,6 @@ class TestBaseError:
         error = MockApiError.TEST_ERROR
 
         assert error.identifier == "test_error"
-        assert error.type == "user error"
-        assert error.level == "warning"
         assert error.http_code == 400
         assert error.websocket_code == 1007
 
@@ -157,16 +137,12 @@ class TestBaseError:
         # Test UNKNOWN_ERROR
         error = MockApiError.UNKNOWN_ERROR
         assert error.identifier == "unknown_error"
-        assert error.type == "server error"
-        assert error.level == "error"
         assert error.http_code == 500
         assert error.websocket_code == 1011
 
         # Test NOT_FOUND
         error = MockApiError.NOT_FOUND
         assert error.identifier == "not_found"
-        assert error.type == "user error"
-        assert error.level == "error"
         assert error.http_code == 404
         assert error.websocket_code == 1008
 
@@ -185,8 +161,6 @@ class TestExceptionHandler:
         assert isinstance(exception, HTTPException)
         assert exception.status_code == 400
         assert exception.detail["code"] == "test_error"
-        assert exception.detail["type"] == "user error"
-        assert exception.detail["level"] == "warning"
         assert exception.detail["status_code"] == 400
 
     def test_build_websocket_exception(self):
@@ -196,8 +170,6 @@ class TestExceptionHandler:
         assert isinstance(exception, WebSocketException)
         assert exception.code == 400
         assert exception.reason["code"] == "test_error"
-        assert exception.reason["type"] == "user error"
-        assert exception.reason["level"] == "warning"
 
     def test_build_exception_with_message(self):
         """Test building exception with custom message"""
@@ -257,7 +229,6 @@ class TestExceptionHandlerMethods:
         content = response.body.decode()
         assert "Test error" in content
         assert "unknown_error" in content
-        assert "server error" in content
 
     @pytest.mark.asyncio
     async def test_request_validation_handler(self):
@@ -275,7 +246,6 @@ class TestExceptionHandlerMethods:
         # Check response content
         content = response.body.decode()
         assert "invalid_data_request" in content
-        assert "user error" in content
 
     @pytest.mark.asyncio
     async def test_response_validation_handler(self):
@@ -293,7 +263,6 @@ class TestExceptionHandlerMethods:
         # Check response content
         content = response.body.decode()
         assert "invalid_data_response" in content
-        assert "user error" in content
 
     @pytest.mark.asyncio
     async def test_http_handler(self):
@@ -352,8 +321,6 @@ class TestIntegrationScenarios:
         assert exception.status_code == 404
         assert exception.detail["code"] == "not_found"
         assert exception.detail["message"] == "User not found"
-        assert exception.detail["type"] == "user error"
-        assert exception.detail["level"] == "error"
         assert exception.detail["details"]["user_id"] == 123
 
     def test_websocket_error_flow(self):
@@ -367,8 +334,6 @@ class TestIntegrationScenarios:
         assert exception.code == 500
         assert exception.reason["code"] == "unknown_error"
         assert exception.reason["message"] == "Internal server error"
-        assert exception.reason["type"] == "server error"
-        assert exception.reason["level"] == "error"
 
     def test_error_callback_integration(self):
         """Test integration between ExceptionHandler and BaseError"""
@@ -390,5 +355,3 @@ class TestIntegrationScenarios:
             assert isinstance(exception, HTTPException)
             assert exception.status_code == mock_error.http_code
             assert exception.detail["code"] == mock_error.identifier
-            assert exception.detail["type"] == mock_error.type
-            assert exception.detail["level"] == mock_error.level

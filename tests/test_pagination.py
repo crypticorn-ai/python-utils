@@ -1,4 +1,6 @@
 import pytest
+from pydantic import BaseModel, ValidationError
+
 from crypticorn_utils.pagination import (
     FilterParams,
     HeavyPageSortFilterParams,
@@ -10,7 +12,6 @@ from crypticorn_utils.pagination import (
     SortFilterParams,
     SortParams,
 )
-from pydantic import BaseModel, ValidationError
 
 
 class Item(BaseModel):

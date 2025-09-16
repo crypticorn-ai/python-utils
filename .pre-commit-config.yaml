@@ -28,7 +28,6 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
-        files: ^python/crypticorn_utils/
         args:
           - --explicit-package-bases
           - --namespace-packages

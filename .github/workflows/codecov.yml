@@ -11,8 +11,6 @@ on:
       - dev
       - v1-dev
       - v1
-    # paths:
-    #   - python/**
 
 permissions:
   contents: write
@@ -52,20 +50,18 @@ jobs:
         run: pip install --pre crypticorn
 
       - name: Install package
-        run: pip install -e python[test,dev]
+        run: pip install -e .[test,dev]
 
       - name: Package build test
         run: |
-          cd python
           python -m build --wheel --sdist
 
       - name: Import verification
         run: |
-          cd python
           python -c "import crypticorn_utils; import importlib.metadata; print(f'Package version: {importlib.metadata.distribution(\"crypticorn_utils\").version}')"
 
       - name: Test with pytest
-        run: pytest python/tests/ --cov=crypticorn_utils --cov-branch --cov-report=xml --cov-report=term-missing:skip-covered
+        run: pytest tests/ --cov=crypticorn_utils --cov-branch --cov-report=xml --cov-report=term-missing:skip-covered
 
       - name: Pytest coverage comment
         if: ${{ matrix.python-version == '3.11' }} # current docker python backend version

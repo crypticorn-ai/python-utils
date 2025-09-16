@@ -10,7 +10,7 @@ from typing import (
     Union,
     cast,
 )
-from crypticorn_utils.types import _TErrorCodes, _ERROR_TYPE, _ERROR_LEVEL, _EXCEPTION_TYPES
+
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import HTTPException as FastAPIHTTPException
@@ -19,7 +19,10 @@ from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from .types import _EXCEPTION_TYPES, _TErrorCodes
+
 _logger = logging.getLogger("crypticorn")
+
 
 def get_exception_response(error_codes: TypeAlias) -> dict[str, dict[str, Any]]:
     """The default schema if an error is returned.
@@ -58,14 +61,10 @@ class _ExceptionDetail(BaseModel, Generic[_TErrorCodes]):
 
     message: Optional[str] = Field(None, description="An additional error message")
     code: _TErrorCodes = Field(..., description="The unique error code")
-    type: _ERROR_TYPE = Field(..., description="The type of error")
-    level: _ERROR_LEVEL = Field(..., description="The level of the error")
     status_code: int = Field(..., description="The HTTP status code")
     details: Any = Field(None, description="Additional details about the error")
 
-    model_config = ConfigDict(
-        title = "ExceptionDetail"
-    )
+    model_config = ConfigDict(title="ExceptionDetail")
 
 
 @dataclass(frozen=True)
@@ -76,8 +75,6 @@ class BaseError(Generic[_TErrorCodes]):
     class Errors:
         UNKNOWN_ERROR = BaseError[ErrorCodes](
             identifier='unknown_error',
-            type="server error",
-            level="error",
             http_code=500,
             websocket_code=1011,
         )
@@ -85,8 +82,6 @@ class BaseError(Generic[_TErrorCodes]):
     """
 
     identifier: _TErrorCodes
-    type: _ERROR_TYPE
-    level: _ERROR_LEVEL
     http_code: int
     websocket_code: int
 
@@ -136,36 +131,26 @@ class ExceptionHandler(Generic[_TErrorCodes]):
     class Errors:
         UNKNOWN_ERROR = BaseError[ErrorCodes](
             identifier='unknown_error',
-            type="server error",
-            level="error",
             http_code=500,
             websocket_code=1011,
         )
         INVALID_DATA_REQUEST = BaseError[ErrorCodes](
             identifier='invalid_data_request',
-            type="user error",
-            level="error",
             http_code=422,
             websocket_code=1007,
         )
         INVALID_DATA_RESPONSE = BaseError[ErrorCodes](
             identifier='invalid_data_response',
-            type="server error",
-            level="error",
             http_code=422,
             websocket_code=1007,
         )
         OBJECT_ALREADY_EXISTS = BaseError[ErrorCodes](
             identifier='object_already_exists',
-            type="user error",
-            level="error",
             http_code=409,
             websocket_code=1008,
         )
         OBJECT_NOT_FOUND = BaseError[ErrorCodes](
             identifier='object_not_found',
-            type="user error",
-            level="error",
             http_code=404,
             websocket_code=1008,
         )
@@ -235,8 +220,6 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         content = _ExceptionDetail[_TErrorCodes](
             message=message,
             code=error.identifier,
-            type=error.type,
-            level=error.level,
             status_code=error.http_code,
             details=details,
         )
@@ -250,8 +233,6 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         body = _ExceptionDetail[_TErrorCodes](
             message=str(exc),
             code=cast(_TErrorCodes, "unknown_error"),
-            type="server error",
-            level="error",
             status_code=500,
         )
         res = JSONResponse(
@@ -269,8 +250,6 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         body = _ExceptionDetail[_TErrorCodes](
             message=str(exc),
             code=cast(_TErrorCodes, "invalid_data_request"),
-            type="user error",
-            level="error",
             status_code=400,
         )
         res = JSONResponse(
@@ -288,8 +267,6 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         body = _ExceptionDetail[_TErrorCodes](
             message=str(exc),
             code=cast(_TErrorCodes, "invalid_data_response"),
-            type="user error",
-            level="error",
             status_code=400,
         )
         res = JSONResponse(

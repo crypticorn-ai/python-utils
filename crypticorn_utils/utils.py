@@ -1,6 +1,6 @@
 """General utility functions and helper methods used across the codebase."""
 
-import random
+import secrets
 import string
 from datetime import datetime
 from typing import Any
@@ -10,7 +10,7 @@ def gen_random_id(length: int = 20) -> str:
     """Generate a random base62 string (a-zA-Z0-9) of specified length. The max possible combinations is 62^length.
     Kucoin max 40, bingx max 40"""
     charset = string.ascii_letters + string.digits
-    return "".join(random.choice(charset) for _ in range(length))
+    return "".join(secrets.choice(charset) for _ in range(length))
 
 
 def optional_import(module_name: str, extra_name: str) -> Any:

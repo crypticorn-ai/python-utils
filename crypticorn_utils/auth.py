@@ -299,8 +299,8 @@ class AuthHandler:
         sec: SecurityScopes = SecurityScopes(),
     ) -> Verify200Response:
         """
-        IMPORTANT: combined_auth is sufficient for most use cases. 
-        
+        IMPORTANT: combined_auth is sufficient for most use cases.
+
         This function adds basic auth to the mix, which is needed for external services like prometheus, but is not recommended for internal use.
         Verifies the bearer token, API key and basic authentication credentials and checks the scopes.
         Returns early on the first successful verification and raises the first error after all tokens are tried.

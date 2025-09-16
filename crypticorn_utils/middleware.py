@@ -13,7 +13,6 @@ from .metrics import (
 )
 
 
-# otherwise prometheus reqisters metrics twice, resulting in an exception
 class PrometheusMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
 
@@ -28,12 +27,10 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         else:
             auth_type = "none"
 
-        try:
-            endpoint = request.get(
-                "route"
-            ).path  # use /time/{type} instead of dynamic route to avoid high cardinality
-        except Exception:
-            endpoint = request.url.path
+        route = request.scope.get("route")
+        endpoint = getattr(
+            route, "path", request.scope.get("path")
+        )  # prefer templated path
 
         start = time.perf_counter()
         response = await call_next(request)

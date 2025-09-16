@@ -17,7 +17,10 @@ HTTP_REQUEST_DURATION = Histogram(
 )
 
 REQUEST_SIZE = Histogram(
-    "http_request_size_bytes", "Size of HTTP request bodies", ["method", "endpoint"]
+    "http_request_size_bytes",
+    "Size of HTTP request bodies",
+    ["method", "endpoint"],
+    registry=registry,
 )
 
 RESPONSE_SIZE = Histogram(

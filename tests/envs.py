@@ -1,13 +1,16 @@
 import asyncio
+import datetime
 import os
-from dotenv import load_dotenv
-from crypticorn_utils.enums import BaseUrl
-from crypticorn_utils.utils import gen_random_id
+import time
+from typing import Union, cast
+
+import jwt
 from crypticorn import AsyncClient
 from crypticorn.auth import CreateApiKeyRequest
-import jwt
-import time
-import datetime
+from dotenv import load_dotenv
+
+from crypticorn_utils.types import ApiEnv, BaseUrl
+from crypticorn_utils.utils import gen_random_id
 
 load_dotenv()
 
@@ -33,17 +36,27 @@ ADMIN_SCOPES = [
 ]
 INTERNAL_SCOPES = ["write:trade:actions"]
 
+
 async def generate_valid_jwt(
-    user_id: str, scopes: list[str] = [], is_admin=False, expires_at: int = None
+    user_id: str,
+    scopes: list[str] = [],
+    is_admin=False,
+    expires_at: Union[int, datetime.datetime, None] = None,
 ):
     now = int(time.time())
+    if expires_at is None:
+        exp = now + JWT_EXPIRES_IN
+    elif isinstance(expires_at, datetime.datetime):
+        exp = int(expires_at.timestamp())
+    else:
+        exp = expires_at
     payload = {
         "sub": user_id,
         "aud": JWT_AUDIENCE,
         "iss": JWT_ISSUER,
         "jti": gen_random_id(),
         "iat": now,
-        "exp": expires_at or now + JWT_EXPIRES_IN,
+        "exp": exp,
         "scopes": scopes,
         "admin": is_admin,
     }
@@ -52,17 +65,19 @@ async def generate_valid_jwt(
 
 
 async def generate_api_key(
-    user_id: str, scopes: list[str] = [], expires_at: datetime.datetime = None
+    user_id: str,
+    scopes: list[str] = [],
+    expires_at: Union[datetime.datetime, None] = None,
 ):
     async with AsyncClient(
-        base_url=BaseUrl.from_env(API_ENV),
+        base_url=BaseUrl.from_env(cast(ApiEnv, API_ENV)),
         jwt=await generate_valid_jwt(user_id=user_id, scopes=scopes),
     ) as api_client:
         res = await api_client.auth.login.create_api_key(
             CreateApiKeyRequest(
                 name=f"pytest-{gen_random_id()}",
                 scopes=scopes,
-                expires_at=expires_at,
+                expires_at=expires_at.isoformat() if expires_at else None,
             )
         )
         return res.api_key
@@ -95,12 +110,12 @@ VALID_JWT = asyncio.run(
     generate_valid_jwt(user_id="user-without-read-predictions")
 )  # dummy user since the USER_ID has access to the predictions (Máté's account)
 VALID_PREDICTION_JWT = asyncio.run(
-    generate_valid_jwt(user_id=USER_ID, scopes=PURCHASEABLE_SCOPES)
+    generate_valid_jwt(
+        user_id="user-with-read-predictions", scopes=["read:predictions"]
+    )
 )
 VALID_ADMIN_JWT = asyncio.run(
-    generate_valid_jwt(
-        user_id=USER_ID, scopes=PURCHASEABLE_SCOPES, is_admin=True
-    )
+    generate_valid_jwt(user_id=USER_ID, scopes=PURCHASEABLE_SCOPES, is_admin=True)
 )
 # API KEY
 ONE_SCOPE_API_KEY_SCOPE = "read:trade:bots"

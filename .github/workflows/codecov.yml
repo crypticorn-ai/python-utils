@@ -4,13 +4,13 @@ name: Test and Coverage
 
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [v0, v0-dev, v1-dev, v1]
   push:
     branches:
-      - main
-      - dev
-    # paths:
-    #   - python/**
+      - v0
+      - v0-dev
+      - v1-dev
+      - v1
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ permissions:
   pull-requests: write
 
 env:
-  API_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  API_ENV: ${{ (github.ref == 'refs/heads/v0' || github.ref == 'refs/heads/v1') && 'prod' || 'dev' }}
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: Set up Python ${{ matrix.python-version }}
@@ -43,24 +43,18 @@ jobs:
         run: ./scripts/merge-env.sh
 
       - name: Install package
-        run: pip install -e python[test,dev]
+        run: pip install -e .[test,dev]
 
       - name: Package build test
         run: |
-          cd python
           python -m build --wheel --sdist
+
       - name: Import verification
         run: |
-          cd python
           python -c "import crypticorn_utils; import importlib.metadata; print(f'Package version: {importlib.metadata.distribution(\"crypticorn_utils\").version}')"
 
       - name: Test with pytest
-        run: pytest python/tests/ --cov=crypticorn_utils --cov-branch --cov-report=xml --cov-report=term-missing:skip-covered
-
-      # - name: Use Codecov to track coverage
-      #   uses: codecov/codecov-action@v2
-      #   with:
-      #     files: ./coverage.xml
+        run: pytest tests/ --cov=crypticorn_utils --cov-branch --cov-report=xml --cov-report=term-missing:skip-covered
 
       - name: Pytest coverage comment
         if: ${{ matrix.python-version == '3.11' }} # current docker python backend version

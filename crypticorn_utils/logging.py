@@ -4,17 +4,14 @@ import logging
 import os
 import sys
 from datetime import datetime
+from enum import StrEnum
 from logging.handlers import RotatingFileHandler
+from typing import Optional
 
-from crypticorn_utils.ansi_colors import AnsiColors as C
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
+from .ansi_colors import AnsiColors as C
 
 
-class LogLevel(StrEnum):
+class _LogLevel(StrEnum):
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -37,6 +34,7 @@ class LogLevel(StrEnum):
         else:
             return C.RESET
 
+
 _LOGFORMAT = (
     f"{C.CYAN_BOLD}%(asctime)s{C.RESET} - "
     f"{C.GREEN_BOLD}%(name)s{C.RESET} - "
@@ -51,7 +49,7 @@ class _CustomFormatter(logging.Formatter):
         super().__init__(*args, **kwargs)
 
     def format(self, record):
-        color = LogLevel.get_color(record.levelname)
+        color = _LogLevel.get_color(record.levelname)
         record.levelcolor = color
         return super().format(record)
 
@@ -62,12 +60,12 @@ class _CustomFormatter(logging.Formatter):
 
 
 def configure_logging(
-    name: str = None,
+    name: Optional[str] = None,
     fmt: str = _LOGFORMAT,
     datefmt: str = _DATEFMT,
     stdout_level: int = logging.INFO,
     file_level: int = logging.INFO,
-    log_file: str = None,
+    log_file: Optional[str] = None,
     filters: list[logging.Filter] = [],
 ) -> None:
     """Configures the logging for the application.
@@ -83,7 +81,7 @@ def configure_logging(
     """
     logger = logging.getLogger(name) if name else logging.getLogger()
 
-    if logger.handlers:  # clear existing handlers to avoid duplicates
+    if logger.hasHandlers():  # clear existing handlers to avoid duplicates
         logger.handlers.clear()
 
     logger.setLevel(min(stdout_level, file_level))  # set to most verbose level

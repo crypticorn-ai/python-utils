@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - dev
+      - v1-dev
+      - v1
   workflow_run:
     workflows: Test and Coverage # only run if the test and coverage workflow has completed successfully
     types:
@@ -87,10 +89,11 @@ jobs:
         # Adjust tag with desired version if applicable.
         uses: python-semantic-release/python-semantic-release@v9.21.0
         with:
-          directory: ./python
+          directory: .
           github_token: ${{ secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
+          changelog: false # github releases are sufficient
 
       - name: Cleanup | Remove release, tag and commit on failure
         if: failure() && steps.release.outputs.tag != ''
@@ -107,4 +110,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc #v1.12.4
         if: steps.release.outputs.released == 'true'
         with:
-          packages-dir: python/dist/
+          packages-dir: dist/

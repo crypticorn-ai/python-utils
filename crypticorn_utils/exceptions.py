@@ -220,7 +220,7 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         content = _ExceptionDetail[_TErrorCodes](
             message=message,
             code=error.identifier,
-            status_code=error.http_code,
+            status_code=error.http_code if type == "http" else error.websocket_code,
             details=details,
         )
         if type == "http":

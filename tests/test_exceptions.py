@@ -168,7 +168,7 @@ class TestExceptionHandler:
         exception = handler.build_exception("test_error", type="websocket")
 
         assert isinstance(exception, WebSocketException)
-        assert exception.code == 400
+        assert exception.code == 1007
         assert exception.reason["code"] == "test_error"
 
     def test_build_exception_with_message(self):
@@ -331,7 +331,7 @@ class TestIntegrationScenarios:
 
         # Verify WebSocket exception properties
         assert isinstance(exception, WebSocketException)
-        assert exception.code == 500
+        assert exception.code == 1011
         assert exception.reason["code"] == "unknown_error"
         assert exception.reason["message"] == "Internal server error"
 

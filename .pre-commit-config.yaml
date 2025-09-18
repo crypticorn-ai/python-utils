@@ -24,14 +24,16 @@ repos:
         language_version: python3.12
         args: ["--profile", "black"]
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.0
+  - repo: local
     hooks:
       - id: mypy
+        name: mypy
+        entry: .venv/bin/mypy
+        language: system
+        types: [python]
+        files: ^crypticorn_utils/
         args:
-          - --explicit-package-bases
-          - --namespace-packages
-          - --ignore-missing-imports
+          - --config-file=mypy.ini
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

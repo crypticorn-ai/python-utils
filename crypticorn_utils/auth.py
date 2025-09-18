@@ -117,7 +117,7 @@ class AuthHandler:
         Verifies the API key.
         """
         self.client.config.api_key = {"APIKeyHeader": api_key}
-        return await self.client.login.verify()
+        return await self.client.login.verify()  # type: ignore[misc]
 
     async def _verify_bearer(
         self, bearer: _fastapi_security.HTTPAuthorizationCredentials
@@ -126,7 +126,7 @@ class AuthHandler:
         Verifies the bearer token.
         """
         self.client.config.access_token = bearer.credentials
-        return await self.client.login.verify()
+        return await self.client.login.verify()  # type: ignore[misc]
 
     async def _verify_basic(
         self, basic: _fastapi_security.HTTPBasicCredentials
@@ -134,7 +134,7 @@ class AuthHandler:
         """
         Verifies the basic authentication credentials.
         """
-        return await self.client.login.verify_basic_auth(basic.username, basic.password)
+        return await self.client.login.verify_basic_auth(basic.username, basic.password)  # type: ignore[misc]
 
     async def _validate_scopes(
         self, api_scopes: list[str], user_scopes: list[str]
@@ -157,9 +157,11 @@ class AuthHandler:
         Tries to extract the message from the body of the exception.
         """
         try:
-            load = _json.loads(e.body)
+            load = _json.loads(
+                _typing.cast(_typing.Union[str, bytes, bytearray], e.body)
+            )
         except (_json.JSONDecodeError, TypeError):
-            return e.body
+            return _typing.cast(str, e.body)
         else:
             common_keys = ["message"]
             for key in common_keys:
@@ -186,21 +188,27 @@ class AuthHandler:
             else:
                 message = "Invalid bearer token"
                 error = "invalid_bearer"  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
-            return _handler.build_exception(
-                _typing.cast(_AUTH_ERROR_CODES, error), message=message
+            return _typing.cast(
+                _fastapi.HTTPException,
+                _handler.build_exception(
+                    _typing.cast(_AUTH_ERROR_CODES, error), message=message
+                ),
             )
 
         elif isinstance(e, _fastapi.HTTPException):
             return e
         else:
-            return _handler.build_exception("unknown_error", message=str(e))
+            return _typing.cast(
+                _fastapi.HTTPException,
+                _handler.build_exception("unknown_error", message=str(e)),
+            )
 
     async def api_key_auth(
         self,
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Depends(_apikey_header)
         ] = None,
-        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the API key and checks the scopes.
@@ -213,8 +221,10 @@ class AuthHandler:
             )
         except _fastapi.HTTPException as e:
             raise _handler.build_exception(
-                e.detail.get("code"),
-                message=e.detail.get("message"),
+                _typing.cast(
+                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
+                ),
+                message=_typing.cast(dict, e.detail).get("message"),
                 headers={_AUTHENTICATE_HEADER: _APIKEY_AUTH_SCHEME},
             )
 
@@ -224,7 +234,7 @@ class AuthHandler:
             _typing.Union[_fastapi_security.HTTPAuthorizationCredentials, None],
             _fastapi.Depends(_http_bearer),
         ] = None,
-        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and checks the scopes.
@@ -237,8 +247,10 @@ class AuthHandler:
             )
         except _fastapi.HTTPException as e:
             raise _handler.build_exception(
-                e.detail.get("code"),
-                message=e.detail.get("message"),
+                _typing.cast(
+                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
+                ),
+                message=_typing.cast(dict, e.detail).get("message"),
                 headers={_AUTHENTICATE_HEADER: _BEARER_AUTH_SCHEME},
             )
 
@@ -258,8 +270,10 @@ class AuthHandler:
             )
         except _fastapi.HTTPException as e:
             raise _handler.build_exception(
-                e.detail.get("code"),
-                message=e.detail.get("message"),
+                _typing.cast(
+                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
+                ),
+                message=_typing.cast(dict, e.detail).get("message"),
                 headers={_AUTHENTICATE_HEADER: _BASIC_AUTH_SCHEME},
             )
 
@@ -272,7 +286,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Depends(_apikey_header)
         ] = None,
-        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and/or API key and checks the scopes.
@@ -286,8 +300,10 @@ class AuthHandler:
             )
         except _fastapi.HTTPException as e:
             raise _handler.build_exception(
-                e.detail.get("code"),
-                message=e.detail.get("message"),
+                _typing.cast(
+                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
+                ),
+                message=_typing.cast(dict, e.detail).get("message"),
                 headers={
                     _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}"
                 },
@@ -306,7 +322,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Depends(_apikey_header)
         ] = None,
-        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
     ) -> _crypticorn_auth.Verify200Response:
         """
         IMPORTANT: combined_auth is sufficient for most use cases.
@@ -333,7 +349,7 @@ class AuthHandler:
                 if res is None:
                     continue
                 if sec:
-                    await self._validate_scopes(sec.scopes, res.scopes)
+                    await self._validate_scopes(sec.scopes, res.scopes or [])
                 return res
 
             except Exception as e:
@@ -359,7 +375,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Query()
         ] = None,
-        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the API key and checks the scopes.
@@ -373,7 +389,7 @@ class AuthHandler:
         bearer: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Query()
         ] = None,
-        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and checks the scopes.
@@ -397,7 +413,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Query()
         ] = None,
-        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and/or API key and checks the scopes.

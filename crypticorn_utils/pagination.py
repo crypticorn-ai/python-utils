@@ -109,8 +109,12 @@ class SortParams(_pydantic.BaseModel, _typing.Generic[T]):
 
     @_pydantic.model_validator(mode="after")
     def validate_sort(self):
+        self._validate_sort()
+        return self
+
+    def _validate_sort(self):
         # Extract the generic argument type
-        args: tuple = self.__pydantic_generic_metadata__.get("args")
+        args = self.__pydantic_generic_metadata__.get("args")
         if not args or not issubclass(args[0], _pydantic.BaseModel):
             raise TypeError(
                 "SortParams must be used with a Pydantic BaseModel as a generic parameter"
@@ -158,11 +162,15 @@ class FilterParams(_pydantic.BaseModel, _typing.Generic[T]):
 
     @_pydantic.model_validator(mode="after")
     def validate_filter(self):
+        self._validate_filter()
+        return self
+
+    def _validate_filter(self):
         if self.filter_by and not self.filter_value:
             raise ValueError("filter_by and filter_value must be provided together")
         if self.filter_by:
             # Extract the generic argument type
-            args: tuple = self.__pydantic_generic_metadata__.get("args")
+            args = self.__pydantic_generic_metadata__.get("args")
             if not args or not issubclass(args[0], _pydantic.BaseModel):
                 raise TypeError(
                     "FilterParams must be used with a Pydantic BaseModel as a generic parameter"
@@ -192,8 +200,8 @@ class SortFilterParams(SortParams[T], FilterParams[T]):
 
     @_pydantic.model_validator(mode="after")
     def validate_sort_filter(self):
-        self.validate_sort()
-        self.validate_filter()
+        self._validate_sort()
+        self._validate_filter()
         return self
 
 
@@ -210,7 +218,7 @@ class PageFilterParams(PaginationParams[T], FilterParams[T]):
 
     @_pydantic.model_validator(mode="after")
     def validate_page_filter(self):
-        self.validate_filter()
+        self._validate_filter()
         return self
 
 
@@ -227,7 +235,7 @@ class PageSortParams(PaginationParams[T], SortParams[T]):
 
     @_pydantic.model_validator(mode="after")
     def validate_page_sort(self):
-        self.validate_sort()
+        self._validate_sort()
         return self
 
 
@@ -248,8 +256,8 @@ class PageSortFilterParams(
 
     @_pydantic.model_validator(mode="after")
     def validate_filter_combo(self):
-        self.validate_filter()
-        self.validate_sort()
+        self._validate_filter()
+        self._validate_sort()
         return self
 
 
@@ -268,8 +276,8 @@ class HeavyPageSortFilterParams(
 
     @_pydantic.model_validator(mode="after")
     def validate_heavy_page_sort_filter(self):
-        self.validate_filter()
-        self.validate_sort()
+        self._validate_filter()
+        self._validate_sort()
         return self
 
 
@@ -288,6 +296,9 @@ def _enforce_field_type(
     :raises: ValueError: If the field doesn't exist or coercion fails.
     """
     expected_type = model.model_fields[field_name].annotation
+
+    if expected_type is None:
+        return value
 
     if isinstance(value, expected_type):
         return value

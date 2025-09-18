@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, Request, WebSocketException
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from crypticorn_utils.exceptions import (
     BaseError,
@@ -301,7 +302,7 @@ class TestExceptionHandlerMethods:
         exception_types = [call[0][0] for call in calls]
 
         assert Exception in exception_types
-        assert HTTPException in exception_types
+        assert StarletteHTTPException in exception_types
         assert RequestValidationError in exception_types
         assert ResponseValidationError in exception_types
 

@@ -4,6 +4,7 @@ import typing as _typing
 
 import fastapi as _fastapi
 import pydantic as _pydantic
+import starlette.exceptions as _starlette_exceptions
 
 from .types import _EXCEPTION_TYPES, _TErrorCodes
 
@@ -171,6 +172,7 @@ class ExceptionHandler(_typing.Generic[_TErrorCodes]):
         headers: _typing.Optional[dict[str, str]] = None,
     ) -> _fastapi.HTTPException:
         return _fastapi.HTTPException(
+            # accepts any JSON serializable object, while starlette only accepts a string
             detail=content.model_dump(mode="json"),
             headers=headers,
             status_code=content.status_code,
@@ -180,7 +182,8 @@ class ExceptionHandler(_typing.Generic[_TErrorCodes]):
         self, content: _ExceptionDetail[_TErrorCodes]
     ) -> _fastapi.WebSocketException:
         return _fastapi.WebSocketException(
-            reason=content.model_dump(mode="json"),
+            # both fastapi and starlette only accept a string, while any JSON serializable object works fine
+            reason=content.model_dump(mode="json"),  # type: ignore[arg-type]
             code=content.status_code,
         )
 
@@ -274,7 +277,7 @@ class ExceptionHandler(_typing.Generic[_TErrorCodes]):
         return res
 
     async def _http_handler(
-        self, request: _fastapi.Request, exc: _fastapi.HTTPException
+        self, request: _fastapi.Request, exc: _starlette_exceptions.HTTPException
     ) -> _fastapi.responses.JSONResponse:
         """Exception handler for HTTPExceptions. It unwraps the HTTPException and returns the detail in a flat JSON response."""
         res = _fastapi.responses.JSONResponse(
@@ -290,12 +293,17 @@ class ExceptionHandler(_typing.Generic[_TErrorCodes]):
         handler.register_exception_handlers(app)
         ```
         """
-        app.add_exception_handler(Exception, self._general_handler)
-        app.add_exception_handler(_fastapi.HTTPException, self._http_handler)
+        # But when you register an exception handler, you should register it for Starlette's HTTPException.
+        # This way, if any part of Starlette's internal code, or a Starlette extension or plug-in, raises a Starlette HTTPException,
+        # your handler will be able to catch and handle it. (https://fastapi.tiangolo.com/tutorial/handling-errors/#fastapis-httpexception-vs-starlettes-httpexception)
         app.add_exception_handler(
-            _fastapi.exceptions.RequestValidationError, self._request_validation_handler
+            _starlette_exceptions.HTTPException, self._http_handler  # type: ignore[arg-type]
+        )
+        app.add_exception_handler(
+            _fastapi.exceptions.RequestValidationError, self._request_validation_handler  # type: ignore[arg-type]
         )
         app.add_exception_handler(
             _fastapi.exceptions.ResponseValidationError,
-            self._response_validation_handler,
+            self._response_validation_handler,  # type: ignore[arg-type]
         )
+        app.add_exception_handler(Exception, self._general_handler)  # type: ignore[arg-type]

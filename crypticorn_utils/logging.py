@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import logging
-import os
-import sys
-from datetime import datetime
-from enum import StrEnum
-from logging.handlers import RotatingFileHandler
-from typing import Optional
+import datetime as _datetime
+import enum as _enum
+import logging as _logging
+import logging.handlers as _logging_handlers
+import os as _os
+import sys as _sys
+import typing as _typing
 
 from .ansi_colors import AnsiColors as C
 
 
-class _LogLevel(StrEnum):
+class _LogLevel(_enum.StrEnum):
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -44,7 +44,7 @@ _LOGFORMAT = (
 _DATEFMT = "%Y-%m-%d %H:%M:%S.%f:"
 
 
-class _CustomFormatter(logging.Formatter):
+class _CustomFormatter(_logging.Formatter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -54,19 +54,19 @@ class _CustomFormatter(logging.Formatter):
         return super().format(record)
 
     def formatTime(self, record, datefmt=_DATEFMT):
-        dt = datetime.fromtimestamp(record.created)
+        dt = _datetime.datetime.fromtimestamp(record.created)
         s = dt.strftime(datefmt)
         return s[:-3]  # Trim last 3 digits to get milliseconds
 
 
 def configure_logging(
-    name: Optional[str] = None,
+    name: _typing.Optional[str] = None,
     fmt: str = _LOGFORMAT,
     datefmt: str = _DATEFMT,
-    stdout_level: int = logging.INFO,
-    file_level: int = logging.INFO,
-    log_file: Optional[str] = None,
-    filters: list[logging.Filter] = [],
+    stdout_level: int = _logging.INFO,
+    file_level: int = _logging.INFO,
+    log_file: _typing.Optional[str] = None,
+    filters: list[_logging.Filter] = [],
 ) -> None:
     """Configures the logging for the application.
     Run this function as early as possible in the application (for example using the `lifespan` parameter in FastAPI).
@@ -79,7 +79,7 @@ def configure_logging(
     :param log_file: The file to write the log messages to.
     :param filters: A list of filters to apply to the log handlers.
     """
-    logger = logging.getLogger(name) if name else logging.getLogger()
+    logger = _logging.getLogger(name) if name else _logging.getLogger()
 
     if logger.hasHandlers():  # clear existing handlers to avoid duplicates
         logger.handlers.clear()
@@ -87,7 +87,7 @@ def configure_logging(
     logger.setLevel(min(stdout_level, file_level))  # set to most verbose level
 
     # Configure stdout handler
-    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler = _logging.StreamHandler(_sys.stdout)
     stdout_handler.setLevel(stdout_level)
     stdout_handler.setFormatter(_CustomFormatter(fmt=fmt, datefmt=datefmt))
     for filter in filters:
@@ -96,8 +96,8 @@ def configure_logging(
 
     # Configure file handler
     if log_file:
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
-        file_handler = RotatingFileHandler(
+        _os.makedirs(_os.path.dirname(log_file), exist_ok=True)
+        file_handler = _logging_handlers.RotatingFileHandler(
             log_file, maxBytes=10 * 1024 * 1024, backupCount=5
         )
         file_handler.setLevel(file_level)
@@ -112,5 +112,5 @@ def configure_logging(
 
 def disable_logging():
     """Disable logging for the crypticorn logger."""
-    logger = logging.getLogger("crypticorn")
+    logger = _logging.getLogger("crypticorn")
     logger.disabled = True

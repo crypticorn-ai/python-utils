@@ -1,30 +1,18 @@
-import logging
-from dataclasses import dataclass
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Generic,
-    Optional,
-    TypeAlias,
-    Union,
-    cast,
-)
+import dataclasses as _dataclasses
+import logging as _logging
+import typing as _typing
 
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import HTTPException as FastAPIHTTPException
-from fastapi import Request, WebSocketException
-from fastapi.exceptions import RequestValidationError, ResponseValidationError
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field
+import fastapi as _fastapi
+import pydantic as _pydantic
 
 from .types import _EXCEPTION_TYPES, _TErrorCodes
 
-_logger = logging.getLogger("crypticorn")
+_logger = _logging.getLogger("crypticorn")
 
 
-def get_exception_response(error_codes: TypeAlias) -> dict[str, dict[str, Any]]:
+def get_exception_response(
+    error_codes: _typing.TypeAlias,
+) -> dict[str, dict[str, _typing.Any]]:
     """The default schema if an error is returned.
     ```python
     ErrorCodes = Literal['unknown_error', 'invalid_data_request']
@@ -56,19 +44,23 @@ def get_exception_response(error_codes: TypeAlias) -> dict[str, dict[str, Any]]:
     }
 
 
-class _ExceptionDetail(BaseModel, Generic[_TErrorCodes]):
+class _ExceptionDetail(_pydantic.BaseModel, _typing.Generic[_TErrorCodes]):
     """Exception details returned to the client."""
 
-    message: Optional[str] = Field(None, description="An additional error message")
-    code: _TErrorCodes = Field(..., description="The unique error code")
-    status_code: int = Field(..., description="The HTTP status code")
-    details: Any = Field(None, description="Additional details about the error")
+    message: _typing.Optional[str] = _pydantic.Field(
+        None, description="An additional error message"
+    )
+    code: _TErrorCodes = _pydantic.Field(..., description="The unique error code")
+    status_code: int = _pydantic.Field(..., description="The HTTP status code")
+    details: _typing.Any = _pydantic.Field(
+        None, description="Additional details about the error"
+    )
 
-    model_config = ConfigDict(title="ExceptionDetail")
+    model_config = _pydantic.ConfigDict(title="ExceptionDetail")
 
 
-@dataclass(frozen=True)
-class BaseError(Generic[_TErrorCodes]):
+@_dataclasses.dataclass(frozen=True)
+class BaseError(_typing.Generic[_TErrorCodes]):
     """Base API error class defining the error details.
 
     ```python
@@ -86,7 +78,7 @@ class BaseError(Generic[_TErrorCodes]):
     websocket_code: int
 
     # Class variable to store all instances
-    _instances: ClassVar[dict[str, "BaseError"]] = {}
+    _instances: _typing.ClassVar[dict[str, "BaseError"]] = {}
 
     def __post_init__(self):
         # Register this instance
@@ -105,7 +97,7 @@ class BaseError(Generic[_TErrorCodes]):
         return cls._instances.copy()
 
 
-class ExceptionHandler(Generic[_TErrorCodes]):
+class ExceptionHandler(_typing.Generic[_TErrorCodes]):
     """This class is used to handle errors and exceptions. It is used to build exceptions and raise them.
 
     - Register the exception handlers to the FastAPI app.
@@ -166,7 +158,7 @@ class ExceptionHandler(Generic[_TErrorCodes]):
 
     def __init__(
         self,
-        callback: Callable[[_TErrorCodes], BaseError[_TErrorCodes]],
+        callback: _typing.Callable[[_TErrorCodes], BaseError[_TErrorCodes]],
     ):
         """
         :param callback: The callback to use to get the error object from the error identifier.
@@ -176,9 +168,9 @@ class ExceptionHandler(Generic[_TErrorCodes]):
     def _http_exception(
         self,
         content: _ExceptionDetail[_TErrorCodes],
-        headers: Optional[dict[str, str]] = None,
-    ) -> HTTPException:
-        return HTTPException(
+        headers: _typing.Optional[dict[str, str]] = None,
+    ) -> _fastapi.HTTPException:
+        return _fastapi.HTTPException(
             detail=content.model_dump(mode="json"),
             headers=headers,
             status_code=content.status_code,
@@ -186,8 +178,8 @@ class ExceptionHandler(Generic[_TErrorCodes]):
 
     def _websocket_exception(
         self, content: _ExceptionDetail[_TErrorCodes]
-    ) -> WebSocketException:
-        return WebSocketException(
+    ) -> _fastapi.WebSocketException:
+        return _fastapi.WebSocketException(
             reason=content.model_dump(mode="json"),
             code=content.status_code,
         )
@@ -196,11 +188,11 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         self,
         code: _TErrorCodes,
         *,
-        message: Optional[str] = None,
-        headers: Optional[dict[str, str]] = None,
-        details: Any = None,
+        message: _typing.Optional[str] = None,
+        headers: _typing.Optional[dict[str, str]] = None,
+        details: _typing.Any = None,
         type: _EXCEPTION_TYPES = "http",
-    ) -> Union[HTTPException, WebSocketException]:
+    ) -> _typing.Union[_fastapi.HTTPException, _fastapi.WebSocketException]:
         """Build an exception, without raising it.
         :param code: The error code to raise.
         :param message: The message to include in the error.
@@ -208,7 +200,7 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         :param details: The details to include in the error.
         :param type: The type of exception to raise. Defaults to HTTP.
 
-        :return: The exception to raise, either an HTTPException or a WebSocketException.
+        :return: The exception to raise, either a fastapi.HTTPException or a fastapi.WebSocketException.
 
         ```python
         @app.get("/")
@@ -228,14 +220,16 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         elif type == "websocket":
             return self._websocket_exception(content)
 
-    async def _general_handler(self, request: Request, exc: Exception) -> JSONResponse:
+    async def _general_handler(
+        self, request: _fastapi.Request, exc: Exception
+    ) -> _fastapi.responses.JSONResponse:
         """Default exception handler for all exceptions."""
         body = _ExceptionDetail[_TErrorCodes](
             message=str(exc),
-            code=cast(_TErrorCodes, "unknown_error"),
+            code=_typing.cast(_TErrorCodes, "unknown_error"),
             status_code=500,
         )
-        res = JSONResponse(
+        res = _fastapi.responses.JSONResponse(
             status_code=body.status_code,
             content=body.model_dump(mode="json"),
             headers=None,
@@ -244,15 +238,15 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         return res
 
     async def _request_validation_handler(
-        self, request: Request, exc: RequestValidationError
-    ) -> JSONResponse:
+        self, request: _fastapi.Request, exc: _fastapi.exceptions.RequestValidationError
+    ) -> _fastapi.responses.JSONResponse:
         """Exception handler for all request validation errors."""
         body = _ExceptionDetail[_TErrorCodes](
             message=str(exc),
-            code=cast(_TErrorCodes, "invalid_data_request"),
+            code=_typing.cast(_TErrorCodes, "invalid_data_request"),
             status_code=400,
         )
-        res = JSONResponse(
+        res = _fastapi.responses.JSONResponse(
             status_code=body.status_code,
             content=body.model_dump(mode="json"),
             headers=None,
@@ -261,15 +255,17 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         return res
 
     async def _response_validation_handler(
-        self, request: Request, exc: ResponseValidationError
-    ) -> JSONResponse:
+        self,
+        request: _fastapi.Request,
+        exc: _fastapi.exceptions.ResponseValidationError,
+    ) -> _fastapi.responses.JSONResponse:
         """Exception handler for all response validation errors."""
         body = _ExceptionDetail[_TErrorCodes](
             message=str(exc),
-            code=cast(_TErrorCodes, "invalid_data_response"),
+            code=_typing.cast(_TErrorCodes, "invalid_data_response"),
             status_code=400,
         )
-        res = JSONResponse(
+        res = _fastapi.responses.JSONResponse(
             status_code=body.status_code,
             content=body.model_dump(mode="json"),
             headers=None,
@@ -277,15 +273,17 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         _logger.error(f"Response validation error: {str(exc)}")
         return res
 
-    async def _http_handler(self, request: Request, exc: HTTPException) -> JSONResponse:
+    async def _http_handler(
+        self, request: _fastapi.Request, exc: _fastapi.HTTPException
+    ) -> _fastapi.responses.JSONResponse:
         """Exception handler for HTTPExceptions. It unwraps the HTTPException and returns the detail in a flat JSON response."""
-        res = JSONResponse(
+        res = _fastapi.responses.JSONResponse(
             status_code=exc.status_code, content=exc.detail, headers=exc.headers
         )
         _logger.error(f"HTTP error: {str(exc)}")
         return res
 
-    def register_exception_handlers(self, app: FastAPI) -> None:
+    def register_exception_handlers(self, app: _fastapi.FastAPI) -> None:
         """Utility to register serveral exception handlers in one go. Catches Exception, HTTPException and Data Validation errors, logs them and responds with a unified json body.
 
         ```python
@@ -293,10 +291,11 @@ class ExceptionHandler(Generic[_TErrorCodes]):
         ```
         """
         app.add_exception_handler(Exception, self._general_handler)
-        app.add_exception_handler(FastAPIHTTPException, self._http_handler)
+        app.add_exception_handler(_fastapi.HTTPException, self._http_handler)
         app.add_exception_handler(
-            RequestValidationError, self._request_validation_handler
+            _fastapi.exceptions.RequestValidationError, self._request_validation_handler
         )
         app.add_exception_handler(
-            ResponseValidationError, self._response_validation_handler
+            _fastapi.exceptions.ResponseValidationError,
+            self._response_validation_handler,
         )

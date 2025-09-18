@@ -1,18 +1,10 @@
-import json
-from typing import Literal, Union, cast
+import json as _json
+import typing as _typing
 
-from crypticorn.auth import AuthClient, Configuration, Verify200Response
-from crypticorn.auth.client.exceptions import ApiException
-from fastapi import Depends, HTTPException, Query, status
-from fastapi.security import (
-    APIKeyHeader,
-    HTTPAuthorizationCredentials,
-    HTTPBasic,
-    HTTPBasicCredentials,
-    HTTPBearer,
-    SecurityScopes,
-)
-from typing_extensions import Annotated
+import crypticorn.auth as _crypticorn_auth
+import fastapi as _fastapi
+import fastapi.security as _fastapi_security
+import typing_extensions as _typing_extensions
 
 from .exceptions import (
     BaseError,
@@ -20,7 +12,7 @@ from .exceptions import (
 )
 from .types import BaseUrl
 
-_AUTH_ERROR_CODES = Literal[
+_AUTH_ERROR_CODES = _typing.Literal[
     "invalid_api_key",
     "expired_api_key",
     "invalid_bearer",
@@ -35,43 +27,43 @@ _AUTH_ERROR_CODES = Literal[
 class _AuthError:
     INVALID_API_KEY = BaseError[_AUTH_ERROR_CODES](
         "invalid_api_key",
-        status.HTTP_401_UNAUTHORIZED,
-        status.WS_1008_POLICY_VIOLATION,
+        _fastapi.status.HTTP_401_UNAUTHORIZED,
+        _fastapi.status.WS_1008_POLICY_VIOLATION,
     )
     INVALID_BASIC_AUTH = BaseError[_AUTH_ERROR_CODES](
         "invalid_basic_auth",
-        status.HTTP_401_UNAUTHORIZED,
-        status.WS_1008_POLICY_VIOLATION,
+        _fastapi.status.HTTP_401_UNAUTHORIZED,
+        _fastapi.status.WS_1008_POLICY_VIOLATION,
     )
     INVALID_BEARER = BaseError[_AUTH_ERROR_CODES](
         "invalid_bearer",
-        status.HTTP_401_UNAUTHORIZED,
-        status.WS_1008_POLICY_VIOLATION,
+        _fastapi.status.HTTP_401_UNAUTHORIZED,
+        _fastapi.status.WS_1008_POLICY_VIOLATION,
     )
     EXPIRED_API_KEY = BaseError[_AUTH_ERROR_CODES](
         "expired_api_key",
-        status.HTTP_401_UNAUTHORIZED,
-        status.WS_1008_POLICY_VIOLATION,
+        _fastapi.status.HTTP_401_UNAUTHORIZED,
+        _fastapi.status.WS_1008_POLICY_VIOLATION,
     )
     EXPIRED_BEARER = BaseError[_AUTH_ERROR_CODES](
         "expired_bearer",
-        status.HTTP_401_UNAUTHORIZED,
-        status.WS_1008_POLICY_VIOLATION,
+        _fastapi.status.HTTP_401_UNAUTHORIZED,
+        _fastapi.status.WS_1008_POLICY_VIOLATION,
     )
     NO_CREDENTIALS = BaseError[_AUTH_ERROR_CODES](
         "no_credentials",
-        status.HTTP_401_UNAUTHORIZED,
-        status.WS_1008_POLICY_VIOLATION,
+        _fastapi.status.HTTP_401_UNAUTHORIZED,
+        _fastapi.status.WS_1008_POLICY_VIOLATION,
     )
     INSUFFICIENT_SCOPES = BaseError[_AUTH_ERROR_CODES](
         "insufficient_scopes",
-        status.HTTP_403_FORBIDDEN,
-        status.WS_1008_POLICY_VIOLATION,
+        _fastapi.status.HTTP_403_FORBIDDEN,
+        _fastapi.status.WS_1008_POLICY_VIOLATION,
     )
     UNKNOWN_ERROR = BaseError[_AUTH_ERROR_CODES](
         "unknown_error",
-        status.HTTP_500_INTERNAL_SERVER_ERROR,
-        status.WS_1011_INTERNAL_ERROR,
+        _fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+        _fastapi.status.WS_1011_INTERNAL_ERROR,
     )
 
 
@@ -83,19 +75,19 @@ _APIKEY_AUTH_SCHEME = "X-API-Key"
 _BASIC_AUTH_SCHEME = "Basic"
 
 # Auth Schemes
-_http_bearer = HTTPBearer(
+_http_bearer = _fastapi_security.HTTPBearer(
     bearerFormat="JWT",
     auto_error=False,
     description="The JWT to use for authentication.",
 )
 
-_apikey_header = APIKeyHeader(
+_apikey_header = _fastapi_security.APIKeyHeader(
     name=_APIKEY_AUTH_SCHEME,
     auto_error=False,
     description="The API key to use for authentication.",
 )
 
-_http_basic = HTTPBasic(
+_http_basic = _fastapi_security.HTTPBasic(
     scheme_name=_BASIC_AUTH_SCHEME,
     auto_error=False,
     description="The username and password to use for authentication.",
@@ -116,9 +108,11 @@ class AuthHandler:
         base_url: BaseUrl = BaseUrl.PROD,
     ):
         self.url = f"{base_url}/v1/auth"
-        self.client = AuthClient(Configuration(host=self.url), is_sync=False)
+        self.client = _crypticorn_auth.AuthClient(
+            _crypticorn_auth.Configuration(host=self.url), is_sync=False
+        )
 
-    async def _verify_api_key(self, api_key: str) -> Verify200Response:
+    async def _verify_api_key(self, api_key: str) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the API key.
         """
@@ -126,15 +120,17 @@ class AuthHandler:
         return await self.client.login.verify()
 
     async def _verify_bearer(
-        self, bearer: HTTPAuthorizationCredentials
-    ) -> Verify200Response:
+        self, bearer: _fastapi_security.HTTPAuthorizationCredentials
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token.
         """
         self.client.config.access_token = bearer.credentials
         return await self.client.login.verify()
 
-    async def _verify_basic(self, basic: HTTPBasicCredentials) -> Verify200Response:
+    async def _verify_basic(
+        self, basic: _fastapi_security.HTTPBasicCredentials
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the basic authentication credentials.
         """
@@ -154,13 +150,15 @@ class AuthHandler:
                 + ")",
             )
 
-    async def _extract_message(self, e: ApiException) -> str:
+    async def _extract_message(
+        self, e: _crypticorn_auth.client.exceptions.ApiException
+    ) -> str:
         """
         Tries to extract the message from the body of the exception.
         """
         try:
-            load = json.loads(e.body)
-        except (json.JSONDecodeError, TypeError):
+            load = _json.loads(e.body)
+        except (_json.JSONDecodeError, TypeError):
             return e.body
         else:
             common_keys = ["message"]
@@ -169,11 +167,11 @@ class AuthHandler:
                     return load[key]
             return load
 
-    async def _handle_exception(self, e: Exception) -> HTTPException:
+    async def _handle_exception(self, e: Exception) -> _fastapi.HTTPException:
         """
         Handles exceptions and returns a HTTPException with the appropriate status code and detail.
         """
-        if isinstance(e, ApiException):
+        if isinstance(e, _crypticorn_auth.client.exceptions.ApiException):
             # handle the TRPC Zod errors from auth-service
             # Unfortunately, we cannot share the error messages defined in python/crypticorn/common/errors.py with the typescript client
             message = await self._extract_message(e)
@@ -189,19 +187,21 @@ class AuthHandler:
                 message = "Invalid bearer token"
                 error = "invalid_bearer"  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
             return _handler.build_exception(
-                cast(_AUTH_ERROR_CODES, error), message=message
+                _typing.cast(_AUTH_ERROR_CODES, error), message=message
             )
 
-        elif isinstance(e, HTTPException):
+        elif isinstance(e, _fastapi.HTTPException):
             return e
         else:
             return _handler.build_exception("unknown_error", message=str(e))
 
     async def api_key_auth(
         self,
-        api_key: Annotated[Union[str, None], Depends(_apikey_header)] = None,
-        sec: SecurityScopes = SecurityScopes(),
-    ) -> Verify200Response:
+        api_key: _typing_extensions.Annotated[
+            _typing.Union[str, None], _fastapi.Depends(_apikey_header)
+        ] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the API key and checks the scopes.
         Use this function if you only want to allow access via the API key.
@@ -211,7 +211,7 @@ class AuthHandler:
             return await self.full_auth(
                 bearer=None, api_key=api_key, basic=None, sec=sec
             )
-        except HTTPException as e:
+        except _fastapi.HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
                 message=e.detail.get("message"),
@@ -220,12 +220,12 @@ class AuthHandler:
 
     async def bearer_auth(
         self,
-        bearer: Annotated[
-            Union[HTTPAuthorizationCredentials, None],
-            Depends(_http_bearer),
+        bearer: _typing_extensions.Annotated[
+            _typing.Union[_fastapi_security.HTTPAuthorizationCredentials, None],
+            _fastapi.Depends(_http_bearer),
         ] = None,
-        sec: SecurityScopes = SecurityScopes(),
-    ) -> Verify200Response:
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and checks the scopes.
         Use this function if you only want to allow access via the bearer token.
@@ -235,7 +235,7 @@ class AuthHandler:
             return await self.full_auth(
                 bearer=bearer, api_key=None, basic=None, sec=sec
             )
-        except HTTPException as e:
+        except _fastapi.HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
                 message=e.detail.get("message"),
@@ -244,8 +244,11 @@ class AuthHandler:
 
     async def basic_auth(
         self,
-        credentials: Annotated[Union[HTTPBasicCredentials, None], Depends(_http_basic)],
-    ) -> Verify200Response:
+        credentials: _typing_extensions.Annotated[
+            _typing.Union[_fastapi_security.HTTPBasicCredentials, None],
+            _fastapi.Depends(_http_basic),
+        ],
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the basic authentication credentials. This authentication method should just be used in cases where JWT and API key authentication are not desired or not possible.
         """
@@ -253,7 +256,7 @@ class AuthHandler:
             return await self.full_auth(
                 basic=credentials, bearer=None, api_key=None, sec=None
             )
-        except HTTPException as e:
+        except _fastapi.HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
                 message=e.detail.get("message"),
@@ -262,12 +265,15 @@ class AuthHandler:
 
     async def combined_auth(
         self,
-        bearer: Annotated[
-            Union[HTTPAuthorizationCredentials, None], Depends(_http_bearer)
+        bearer: _typing_extensions.Annotated[
+            _typing.Union[_fastapi_security.HTTPAuthorizationCredentials, None],
+            _fastapi.Depends(_http_bearer),
         ] = None,
-        api_key: Annotated[Union[str, None], Depends(_apikey_header)] = None,
-        sec: SecurityScopes = SecurityScopes(),
-    ) -> Verify200Response:
+        api_key: _typing_extensions.Annotated[
+            _typing.Union[str, None], _fastapi.Depends(_apikey_header)
+        ] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and/or API key and checks the scopes.
         Returns early on the first successful verification and raises the first error after all tokens are tried.
@@ -278,7 +284,7 @@ class AuthHandler:
             return await self.full_auth(
                 basic=None, bearer=bearer, api_key=api_key, sec=sec
             )
-        except HTTPException as e:
+        except _fastapi.HTTPException as e:
             raise _handler.build_exception(
                 e.detail.get("code"),
                 message=e.detail.get("message"),
@@ -289,15 +295,19 @@ class AuthHandler:
 
     async def full_auth(
         self,
-        basic: Annotated[
-            Union[HTTPBasicCredentials, None], Depends(_http_basic)
+        basic: _typing_extensions.Annotated[
+            _typing.Union[_fastapi_security.HTTPBasicCredentials, None],
+            _fastapi.Depends(_http_basic),
         ] = None,
-        bearer: Annotated[
-            Union[HTTPAuthorizationCredentials, None], Depends(_http_bearer)
+        bearer: _typing_extensions.Annotated[
+            _typing.Union[_fastapi_security.HTTPAuthorizationCredentials, None],
+            _fastapi.Depends(_http_bearer),
         ] = None,
-        api_key: Annotated[Union[str, None], Depends(_apikey_header)] = None,
-        sec: SecurityScopes = SecurityScopes(),
-    ) -> Verify200Response:
+        api_key: _typing_extensions.Annotated[
+            _typing.Union[str, None], _fastapi.Depends(_apikey_header)
+        ] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+    ) -> _crypticorn_auth.Verify200Response:
         """
         IMPORTANT: combined_auth is sufficient for most use cases.
 
@@ -316,9 +326,9 @@ class AuthHandler:
                 res = None
                 if isinstance(token, str):
                     res = await self._verify_api_key(token)
-                elif isinstance(token, HTTPAuthorizationCredentials):
+                elif isinstance(token, _fastapi_security.HTTPAuthorizationCredentials):
                     res = await self._verify_bearer(token)
-                elif isinstance(token, HTTPBasicCredentials):
+                elif isinstance(token, _fastapi_security.HTTPBasicCredentials):
                     res = await self._verify_basic(token)
                 if res is None:
                     continue
@@ -346,9 +356,11 @@ class AuthHandler:
 
     async def ws_api_key_auth(
         self,
-        api_key: Annotated[Union[str, None], Query()] = None,
-        sec: SecurityScopes = SecurityScopes(),
-    ) -> Verify200Response:
+        api_key: _typing_extensions.Annotated[
+            _typing.Union[str, None], _fastapi.Query()
+        ] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the API key and checks the scopes.
         Use this function if you only want to allow access via the API key.
@@ -358,16 +370,20 @@ class AuthHandler:
 
     async def ws_bearer_auth(
         self,
-        bearer: Annotated[Union[str, None], Query()] = None,
-        sec: SecurityScopes = SecurityScopes(),
-    ) -> Verify200Response:
+        bearer: _typing_extensions.Annotated[
+            _typing.Union[str, None], _fastapi.Query()
+        ] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and checks the scopes.
         Use this function if you only want to allow access via the bearer token.
         This function is used for WebSocket connections.
         """
         credentials = (
-            HTTPAuthorizationCredentials(scheme="Bearer", credentials=bearer)
+            _fastapi_security.HTTPAuthorizationCredentials(
+                scheme="Bearer", credentials=bearer
+            )
             if bearer
             else None
         )
@@ -375,17 +391,23 @@ class AuthHandler:
 
     async def ws_combined_auth(
         self,
-        bearer: Annotated[Union[str, None], Query()] = None,
-        api_key: Annotated[Union[str, None], Query()] = None,
-        sec: SecurityScopes = SecurityScopes(),
-    ) -> Verify200Response:
+        bearer: _typing_extensions.Annotated[
+            _typing.Union[str, None], _fastapi.Query()
+        ] = None,
+        api_key: _typing_extensions.Annotated[
+            _typing.Union[str, None], _fastapi.Query()
+        ] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
+    ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and/or API key and checks the scopes.
         Use this function if you want to allow access via either the bearer token or the API key.
         This function is used for WebSocket connections.
         """
         credentials = (
-            HTTPAuthorizationCredentials(scheme="Bearer", credentials=bearer)
+            _fastapi_security.HTTPAuthorizationCredentials(
+                scheme="Bearer", credentials=bearer
+            )
             if bearer
             else None
         )

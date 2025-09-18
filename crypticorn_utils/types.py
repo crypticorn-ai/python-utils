@@ -1,10 +1,10 @@
-from enum import StrEnum as _StrEnum
-from typing import Literal, TypeVar
+import enum as _enum
+import typing as _typing
 
-ApiEnv = Literal["prod", "dev", "local", "docker"]
+ApiEnv = _typing.Literal["prod", "dev", "local", "docker"]
 
 
-class BaseUrl(_StrEnum):
+class BaseUrl(_enum.StrEnum):
     """The base URL to connect to the API."""
 
     PROD = "https://api.crypticorn.com"
@@ -25,7 +25,7 @@ class BaseUrl(_StrEnum):
             return cls.DOCKER
 
 
-_TErrorCodes = TypeVar("_TErrorCodes", bound=str)
+_TErrorCodes = _typing.TypeVar("_TErrorCodes", bound=str)
 """A type variable for the error codes. It is a string type that is used to define the error codes.
 e.g.: ErrorCodes = Literal['unknown_error', 'invalid_data_request', 'invalid_data_response', 'object_already_exists', 'object_not_found']"""
-_EXCEPTION_TYPES = Literal["http", "websocket"]
+_EXCEPTION_TYPES = _typing.Literal["http", "websocket"]

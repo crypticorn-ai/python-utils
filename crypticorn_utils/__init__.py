@@ -1,11 +1,5 @@
 from .auth import AuthHandler
-from .exceptions import (
-    BaseError,
-    ExceptionHandler,
-    HTTPException,
-    WebSocketException,
-    get_exception_response,
-)
+from .exceptions import BaseError, ExceptionHandler, get_exception_response
 from .logging import configure_logging, disable_logging
 from .metrics import registry
 from .middleware import add_middleware
@@ -49,6 +43,4 @@ __all__ = [
     "BaseError",
     "get_exception_response",
     "registry",
-    "HTTPException",
-    "WebSocketException",
 ]

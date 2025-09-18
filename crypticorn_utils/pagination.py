@@ -1,14 +1,14 @@
 """Utilities for handling paginated API responses, cursor-based pagination, filtering, sorting, etc."""
 
-import math
-from typing import Annotated, Any, Generic, Literal, Optional, Type, TypeVar
+import math as _math
+import typing as _typing
 
-from pydantic import BaseModel, Field, model_validator
+import pydantic as _pydantic
 
-T = TypeVar("T")
+T = _typing.TypeVar("T")
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
+class PaginatedResponse(_pydantic.BaseModel, _typing.Generic[T]):
     """Pydantic model for paginated response
     >>> @router.get("", operation_id="getOrders")
     >>> async def get_orders(
@@ -27,22 +27,28 @@ class PaginatedResponse(BaseModel, Generic[T]):
     """
 
     data: list[T]
-    total: int = Field(description="The total number of items")
-    page: int = Field(description="The current page number")
-    page_size: int = Field(description="The number of items per page")
-    prev: Optional[int] = Field(None, description="The previous page number")
-    next: Optional[int] = Field(None, description="The next page number")
-    last: Optional[int] = Field(None, description="The last page number")
+    total: int = _pydantic.Field(description="The total number of items")
+    page: int = _pydantic.Field(description="The current page number")
+    page_size: int = _pydantic.Field(description="The number of items per page")
+    prev: _typing.Optional[int] = _pydantic.Field(
+        None, description="The previous page number"
+    )
+    next: _typing.Optional[int] = _pydantic.Field(
+        None, description="The next page number"
+    )
+    last: _typing.Optional[int] = _pydantic.Field(
+        None, description="The last page number"
+    )
 
     @staticmethod
-    def get_next_page(total: int, page_size: int, page: int) -> Optional[int]:
+    def get_next_page(total: int, page_size: int, page: int) -> _typing.Optional[int]:
         """Get the next page number"""
-        if page < math.ceil(total / page_size):
+        if page < _math.ceil(total / page_size):
             return page + 1
         return None
 
     @staticmethod
-    def get_prev_page(page: int) -> Optional[int]:
+    def get_prev_page(page: int) -> _typing.Optional[int]:
         """Get the previous page number"""
         if page > 1:
             return page - 1
@@ -51,10 +57,10 @@ class PaginatedResponse(BaseModel, Generic[T]):
     @staticmethod
     def get_last_page(total: int, page_size: int) -> int:
         """Get the last page number"""
-        return max(1, math.ceil(total / page_size))
+        return max(1, _math.ceil(total / page_size))
 
 
-class PaginationParams(BaseModel, Generic[T]):
+class PaginationParams(_pydantic.BaseModel, _typing.Generic[T]):
     """Standard pagination parameters for usage in API endpoints. Check the [fastapi docs](https://fastapi.tiangolo.com/tutorial/query-param-models/?h=qu#query-parameters-with-a-pydantic-model) for usage examples.
     You should inherit from this class when adding additional parameters. You should use this class in combination with `PaginatedResponse` to return the paginated response.
     Usage:
@@ -69,8 +75,8 @@ class PaginationParams(BaseModel, Generic[T]):
     >>>     page_size: int = Field(default=5, description="The number of items per page")
     """
 
-    page: int = Field(default=1, description="The current page number")
-    page_size: Annotated[int, Field(ge=1, le=100)] = Field(
+    page: int = _pydantic.Field(default=1, description="The current page number")
+    page_size: _typing.Annotated[int, _pydantic.Field(ge=1, le=100)] = _pydantic.Field(
         10, description="The number of items per page. Default is 10, max is 100."
     )
 
@@ -78,12 +84,12 @@ class PaginationParams(BaseModel, Generic[T]):
 class HeavyPaginationParams(PaginationParams[T]):
     """Pagination parameters with a higher default size. Refer to `PaginationParams` for usage examples."""
 
-    page_size: Annotated[int, Field(ge=1, le=1000)] = Field(
+    page_size: _typing.Annotated[int, _pydantic.Field(ge=1, le=1000)] = _pydantic.Field(
         100, description="The number of items per page. Default is 100, max is 1000."
     )
 
 
-class SortParams(BaseModel, Generic[T]):
+class SortParams(_pydantic.BaseModel, _typing.Generic[T]):
     """Standard sort parameters for usage in API endpoints. Check the [fastapi docs](https://fastapi.tiangolo.com/tutorial/query-param-models/?h=qu#query-parameters-with-a-pydantic-model) for usage examples.
     You should inherit from this class when adding additional parameters.
     Usage:
@@ -94,22 +100,24 @@ class SortParams(BaseModel, Generic[T]):
     >>>     ...
     """
 
-    sort_order: Optional[Literal["asc", "desc"]] = Field(
+    sort_order: _typing.Optional[_typing.Literal["asc", "desc"]] = _pydantic.Field(
         None, description="The order to sort by"
     )
-    sort_by: Optional[str] = Field(None, description="The field to sort by")
+    sort_by: _typing.Optional[str] = _pydantic.Field(
+        None, description="The field to sort by"
+    )
 
-    @model_validator(mode="after")
+    @_pydantic.model_validator(mode="after")
     def validate_sort(self):
         # Extract the generic argument type
         args: tuple = self.__pydantic_generic_metadata__.get("args")
-        if not args or not issubclass(args[0], BaseModel):
+        if not args or not issubclass(args[0], _pydantic.BaseModel):
             raise TypeError(
                 "SortParams must be used with a Pydantic BaseModel as a generic parameter"
             )
         if self.sort_by:
             # check if the sort field is valid
-            model: Type[BaseModel] = args[0]
+            model: _typing.Type[_pydantic.BaseModel] = args[0]
             if self.sort_by not in model.model_fields:
                 raise ValueError(
                     f"Invalid field: '{self.sort_by}'. Must be one of: {list(model.model_fields)}"
@@ -128,7 +136,7 @@ class SortParams(BaseModel, Generic[T]):
         return self
 
 
-class FilterParams(BaseModel, Generic[T]):
+class FilterParams(_pydantic.BaseModel, _typing.Generic[T]):
     """Standard filter parameters for usage in API endpoints. Check the [fastapi docs](https://fastapi.tiangolo.com/tutorial/query-param-models/?h=qu#query-parameters-with-a-pydantic-model) for usage examples.
     You should inherit from this class when adding additional parameters.
     Usage:
@@ -139,24 +147,28 @@ class FilterParams(BaseModel, Generic[T]):
     >>>     ...
     """
 
-    filter_by: Optional[str] = Field(None, description="The field to filter by")
-    filter_value: Optional[str] = Field(None, description="The value to filter with")
+    filter_by: _typing.Optional[str] = _pydantic.Field(
+        None, description="The field to filter by"
+    )
+    filter_value: _typing.Optional[str] = _pydantic.Field(
+        None, description="The value to filter with"
+    )
     # currently openapi-gen does not support typing.Any in combo with None, so we use str
     # this is fine since the input is a string anyways from the request and the correct type is enforced by the model validator from the filter_by field
 
-    @model_validator(mode="after")
+    @_pydantic.model_validator(mode="after")
     def validate_filter(self):
         if self.filter_by and not self.filter_value:
             raise ValueError("filter_by and filter_value must be provided together")
         if self.filter_by:
             # Extract the generic argument type
             args: tuple = self.__pydantic_generic_metadata__.get("args")
-            if not args or not issubclass(args[0], BaseModel):
+            if not args or not issubclass(args[0], _pydantic.BaseModel):
                 raise TypeError(
                     "FilterParams must be used with a Pydantic BaseModel as a generic parameter"
                 )
             # check if the filter field is valid
-            model: Type[BaseModel] = args[0]
+            model: _typing.Type[_pydantic.BaseModel] = args[0]
             if self.filter_by not in model.model_fields:
                 raise ValueError(
                     f"Invalid field: '{self.filter_by}'. Must be one of: {list(model.model_fields)}"
@@ -178,7 +190,7 @@ class SortFilterParams(SortParams[T], FilterParams[T]):
     >>>     ...
     """
 
-    @model_validator(mode="after")
+    @_pydantic.model_validator(mode="after")
     def validate_sort_filter(self):
         self.validate_sort()
         self.validate_filter()
@@ -196,7 +208,7 @@ class PageFilterParams(PaginationParams[T], FilterParams[T]):
     >>>     ...
     """
 
-    @model_validator(mode="after")
+    @_pydantic.model_validator(mode="after")
     def validate_page_filter(self):
         self.validate_filter()
         return self
@@ -213,7 +225,7 @@ class PageSortParams(PaginationParams[T], SortParams[T]):
     >>>     ...
     """
 
-    @model_validator(mode="after")
+    @_pydantic.model_validator(mode="after")
     def validate_page_sort(self):
         self.validate_sort()
         return self
@@ -234,7 +246,7 @@ class PageSortFilterParams(
     >>>     ...
     """
 
-    @model_validator(mode="after")
+    @_pydantic.model_validator(mode="after")
     def validate_filter_combo(self):
         self.validate_filter()
         self.validate_sort()
@@ -254,14 +266,16 @@ class HeavyPageSortFilterParams(
     >>>     ...
     """
 
-    @model_validator(mode="after")
+    @_pydantic.model_validator(mode="after")
     def validate_heavy_page_sort_filter(self):
         self.validate_filter()
         self.validate_sort()
         return self
 
 
-def _enforce_field_type(model: Type[BaseModel], field_name: str, value: Any) -> Any:
+def _enforce_field_type(
+    model: _typing.Type[_pydantic.BaseModel], field_name: str, value: _typing.Any
+) -> _typing.Any:
     """
     Coerce or validate `value` to match the type of `field_name` on the given `model`. Should be used after checking that the field is valid.
 

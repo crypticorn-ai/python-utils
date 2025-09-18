@@ -1,9 +1,8 @@
-import time
-from typing import Literal, Optional
+import time as _time
+import typing as _typing
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
+import fastapi as _fastapi
+import starlette.middleware.base as _starlette_middleware_base
 
 from .metrics import (
     HTTP_REQUEST_DURATION,
@@ -13,8 +12,8 @@ from .metrics import (
 )
 
 
-class PrometheusMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+class PrometheusMiddleware(_starlette_middleware_base.BaseHTTPMiddleware):
+    async def dispatch(self, request: _fastapi.Request, call_next):
 
         if "authorization" in request.headers:
             auth_type = (
@@ -32,9 +31,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             route, "path", request.scope.get("path")
         )  # prefer templated path
 
-        start = time.perf_counter()
+        start = _time.perf_counter()
         response = await call_next(request)
-        duration = time.perf_counter() - start
+        duration = _time.perf_counter() - start
 
         HTTP_REQUESTS_COUNT.labels(
             method=request.method,
@@ -74,7 +73,8 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
 
 def add_middleware(
-    app: "FastAPI", include: Optional[list[Literal["metrics", "cors"]]] = None
+    app: "_fastapi.FastAPI",
+    include: _typing.Optional[list[_typing.Literal["metrics", "cors"]]] = None,
 ):
     """
     Add middleware to the FastAPI app.
@@ -86,7 +86,7 @@ def add_middleware(
 
     if "cors" in include:
         app.add_middleware(
-            CORSMiddleware,
+            _fastapi.middleware.cors.CORSMiddleware,
             allow_origins=[
                 "http://localhost:5173",  # vite dev server
                 "http://localhost:4173",  # vite preview server

@@ -27,43 +27,43 @@ _AUTH_ERROR_CODES = _typing.Literal[
 class _AuthError:
     INVALID_API_KEY = BaseError[_AUTH_ERROR_CODES](
         "invalid_api_key",
-        _fastapi.status.HTTP_401_UNAUTHORIZED,
-        _fastapi.status.WS_1008_POLICY_VIOLATION,
+        401,
+        1008,
     )
     INVALID_BASIC_AUTH = BaseError[_AUTH_ERROR_CODES](
         "invalid_basic_auth",
-        _fastapi.status.HTTP_401_UNAUTHORIZED,
-        _fastapi.status.WS_1008_POLICY_VIOLATION,
+        401,
+        1008,
     )
     INVALID_BEARER = BaseError[_AUTH_ERROR_CODES](
         "invalid_bearer",
-        _fastapi.status.HTTP_401_UNAUTHORIZED,
-        _fastapi.status.WS_1008_POLICY_VIOLATION,
+        401,
+        1008,
     )
     EXPIRED_API_KEY = BaseError[_AUTH_ERROR_CODES](
         "expired_api_key",
-        _fastapi.status.HTTP_401_UNAUTHORIZED,
-        _fastapi.status.WS_1008_POLICY_VIOLATION,
+        401,
+        1008,
     )
     EXPIRED_BEARER = BaseError[_AUTH_ERROR_CODES](
         "expired_bearer",
-        _fastapi.status.HTTP_401_UNAUTHORIZED,
-        _fastapi.status.WS_1008_POLICY_VIOLATION,
+        401,
+        1008,
     )
     NO_CREDENTIALS = BaseError[_AUTH_ERROR_CODES](
         "no_credentials",
-        _fastapi.status.HTTP_401_UNAUTHORIZED,
-        _fastapi.status.WS_1008_POLICY_VIOLATION,
+        401,
+        1008,
     )
     INSUFFICIENT_SCOPES = BaseError[_AUTH_ERROR_CODES](
         "insufficient_scopes",
-        _fastapi.status.HTTP_403_FORBIDDEN,
-        _fastapi.status.WS_1008_POLICY_VIOLATION,
+        403,
+        1008,
     )
     UNKNOWN_ERROR = BaseError[_AUTH_ERROR_CODES](
         "unknown_error",
-        _fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
-        _fastapi.status.WS_1011_INTERNAL_ERROR,
+        500,
+        1011,
     )
 
 

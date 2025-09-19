@@ -2,15 +2,7 @@
 # https://github.com/marketplace/actions/pytest-coverage-comment
 name: Test and Coverage
 
-on:
-  pull_request:
-    branches: [v0, v0-dev, v1-dev, v1]
-  push:
-    branches:
-      - v0
-      - v0-dev
-      - v1-dev
-      - v1
+on: [push, pull_request]
 
 permissions:
   contents: write
@@ -18,7 +10,7 @@ permissions:
   pull-requests: write
 
 env:
-  API_ENV: ${{ (github.ref == 'refs/heads/v0' || github.ref == 'refs/heads/v1') && 'prod' || 'dev' }}
+  API_ENV: ${{ (github.ref == 'refs/heads/v0' || github.ref == 'refs/heads/v1' || github.ref == 'refs/heads/v2') && 'prod' || 'dev' }}
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:

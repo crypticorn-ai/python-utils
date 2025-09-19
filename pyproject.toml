@@ -66,6 +66,15 @@ prerelease_token = "rc"
 match = "v1"
 prerelease = false
 
+[tool.semantic_release.branches.v2-dev]
+match = "v2-dev"
+prerelease = true
+prerelease_token = "rc"
+
+[tool.semantic_release.branches.v2]
+match = "v2"
+prerelease = false
+
 [project.urls]
 Changelog = "https://github.com/crypticorn-ai/util-libraries/releases"
 

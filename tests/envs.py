@@ -18,23 +18,14 @@ load_dotenv()
 # ASSERT SCOPE
 PURCHASEABLE_SCOPES = [
     "read:predictions",
-    "read:metrics:marketcap",
-    "read:metrics:indicators",
-    "read:metrics:exchanges",
-    "read:metrics:tokens",
-    "read:metrics:markets",
-    "read:klines",
-    "read:sentiment",
     "read:dex:signals",
 ]
 ADMIN_SCOPES = [
     "write:trade:strategies",
     "write:pay:products",
     "write:pay:coupons",
-    "write:admin",
-    "read:admin",
 ]
-INTERNAL_SCOPES = ["write:trade:actions"]
+INTERNAL_SCOPES = ["write:trade:actions", "read:prometheus:metrics"]
 
 
 async def generate_valid_jwt(

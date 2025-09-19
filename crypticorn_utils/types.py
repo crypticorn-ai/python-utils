@@ -23,9 +23,3 @@ class BaseUrl(_enum.StrEnum):
             return cls.LOCAL
         elif env == "docker":
             return cls.DOCKER
-
-
-_TErrorCodes = _typing.TypeVar("_TErrorCodes", bound=str)
-"""A type variable for the error codes. It is a string type that is used to define the error codes.
-e.g.: ErrorCodes = Literal['unknown_error', 'invalid_data_request', 'invalid_data_response', 'object_already_exists', 'object_not_found']"""
-_EXCEPTION_TYPES = _typing.Literal["http", "websocket"]

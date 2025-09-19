@@ -1,5 +1,4 @@
 from .auth import AuthHandler
-from .exceptions import BaseError, ExceptionHandler, get_exception_response
 from .logging import configure_logging, disable_logging
 from .metrics import registry
 from .middleware import add_middleware
@@ -22,8 +21,6 @@ __all__ = [
     "AuthHandler",
     "ApiEnv",
     "BaseUrl",
-    "BaseError",
-    "ExceptionHandler",
     "configure_logging",
     "disable_logging",
     "add_middleware",
@@ -40,7 +37,5 @@ __all__ = [
     "gen_random_id",
     "datetime_to_timestamp",
     "optional_import",
-    "BaseError",
-    "get_exception_response",
     "registry",
 ]

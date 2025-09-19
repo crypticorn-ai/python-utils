@@ -6,68 +6,7 @@ import fastapi as _fastapi
 import fastapi.security as _fastapi_security
 import typing_extensions as _typing_extensions
 
-from .exceptions import (
-    BaseError,
-    ExceptionHandler,
-)
 from .types import BaseUrl
-
-_AUTH_ERROR_CODES = _typing.Literal[
-    "invalid_api_key",
-    "expired_api_key",
-    "invalid_bearer",
-    "expired_bearer",
-    "invalid_basic_auth",
-    "no_credentials",
-    "insufficient_scopes",
-    "unknown_error",
-]
-
-
-class _AuthError:
-    INVALID_API_KEY = BaseError[_AUTH_ERROR_CODES](
-        "invalid_api_key",
-        401,
-        1008,
-    )
-    INVALID_BASIC_AUTH = BaseError[_AUTH_ERROR_CODES](
-        "invalid_basic_auth",
-        401,
-        1008,
-    )
-    INVALID_BEARER = BaseError[_AUTH_ERROR_CODES](
-        "invalid_bearer",
-        401,
-        1008,
-    )
-    EXPIRED_API_KEY = BaseError[_AUTH_ERROR_CODES](
-        "expired_api_key",
-        401,
-        1008,
-    )
-    EXPIRED_BEARER = BaseError[_AUTH_ERROR_CODES](
-        "expired_bearer",
-        401,
-        1008,
-    )
-    NO_CREDENTIALS = BaseError[_AUTH_ERROR_CODES](
-        "no_credentials",
-        401,
-        1008,
-    )
-    INSUFFICIENT_SCOPES = BaseError[_AUTH_ERROR_CODES](
-        "insufficient_scopes",
-        403,
-        1008,
-    )
-    UNKNOWN_ERROR = BaseError[_AUTH_ERROR_CODES](
-        "unknown_error",
-        500,
-        1011,
-    )
-
-
-_handler = ExceptionHandler[_AUTH_ERROR_CODES](callback=BaseError.from_identifier)
 
 _AUTHENTICATE_HEADER = "WWW-Authenticate"
 _BEARER_AUTH_SCHEME = "Bearer"
@@ -143,11 +82,16 @@ class AuthHandler:
         Checks if the required scopes are a subset of the user scopes.
         """
         if not set(api_scopes).issubset(user_scopes):
-            raise _handler.build_exception(
-                "insufficient_scopes",
-                message="Insufficient scopes to access this resource (required: "
+            raise _fastapi.HTTPException(
+                status_code=403,
+                detail="Insufficient scopes to access this resource (required: "
                 + ", ".join(api_scopes)
+                + ", allowed: "
+                + ", ".join(user_scopes)
                 + ")",
+                headers={
+                    _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}"
+                },
             )
 
     async def _extract_message(
@@ -178,29 +122,42 @@ class AuthHandler:
             # Unfortunately, we cannot share the error messages defined in python/crypticorn/common/errors.py with the typescript client
             message = await self._extract_message(e)
             if message == "Invalid API key":
-                error = "invalid_api_key"
+                return _fastapi.HTTPException(
+                    status_code=401,
+                    detail="Invalid API key",
+                    headers={_AUTHENTICATE_HEADER: _APIKEY_AUTH_SCHEME},
+                )
             elif message == "API key expired":
-                error = "expired_api_key"
+                return _fastapi.HTTPException(
+                    status_code=401,
+                    detail="API key expired",
+                    headers={_AUTHENTICATE_HEADER: _APIKEY_AUTH_SCHEME},
+                )
             elif message == "jwt expired":
-                error = "expired_bearer"
+                return _fastapi.HTTPException(
+                    status_code=401,
+                    detail="JWT token expired",
+                    headers={_AUTHENTICATE_HEADER: _BEARER_AUTH_SCHEME},
+                )
             elif message == "Invalid basic authentication credentials":
-                error = "invalid_basic_auth"
+                return _fastapi.HTTPException(
+                    status_code=401,
+                    detail="Invalid basic authentication credentials",
+                    headers={_AUTHENTICATE_HEADER: _BASIC_AUTH_SCHEME},
+                )
             else:
-                message = "Invalid bearer token"
-                error = "invalid_bearer"  # jwt malformed, jwt not active (https://www.npmjs.com/package/jsonwebtoken#errors--codes)
-            return _typing.cast(
-                _fastapi.HTTPException,
-                _handler.build_exception(
-                    _typing.cast(_AUTH_ERROR_CODES, error), message=message
-                ),
-            )
+                return _fastapi.HTTPException(
+                    status_code=401,
+                    detail="Invalid bearer token",
+                    headers={_AUTHENTICATE_HEADER: _BEARER_AUTH_SCHEME},
+                )
 
         elif isinstance(e, _fastapi.HTTPException):
             return e
         else:
-            return _typing.cast(
-                _fastapi.HTTPException,
-                _handler.build_exception("unknown_error", message=str(e)),
+            return _fastapi.HTTPException(
+                status_code=500,
+                detail=str(e),
             )
 
     async def api_key_auth(
@@ -220,12 +177,11 @@ class AuthHandler:
                 bearer=None, api_key=api_key, basic=None, sec=sec
             )
         except _fastapi.HTTPException as e:
-            raise _handler.build_exception(
-                _typing.cast(
-                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
-                ),
-                message=_typing.cast(dict, e.detail).get("message"),
-                headers={_AUTHENTICATE_HEADER: _APIKEY_AUTH_SCHEME},
+            # Re-raise with appropriate headers
+            headers = dict(e.headers) if e.headers else {}
+            headers.update({_AUTHENTICATE_HEADER: _APIKEY_AUTH_SCHEME})
+            raise _fastapi.HTTPException(
+                status_code=e.status_code, detail=e.detail, headers=headers
             )
 
     async def bearer_auth(
@@ -246,12 +202,11 @@ class AuthHandler:
                 bearer=bearer, api_key=None, basic=None, sec=sec
             )
         except _fastapi.HTTPException as e:
-            raise _handler.build_exception(
-                _typing.cast(
-                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
-                ),
-                message=_typing.cast(dict, e.detail).get("message"),
-                headers={_AUTHENTICATE_HEADER: _BEARER_AUTH_SCHEME},
+            # Re-raise with appropriate headers
+            headers = dict(e.headers) if e.headers else {}
+            headers.update({_AUTHENTICATE_HEADER: _BEARER_AUTH_SCHEME})
+            raise _fastapi.HTTPException(
+                status_code=e.status_code, detail=e.detail, headers=headers
             )
 
     async def basic_auth(
@@ -269,12 +224,11 @@ class AuthHandler:
                 basic=credentials, bearer=None, api_key=None, sec=None
             )
         except _fastapi.HTTPException as e:
-            raise _handler.build_exception(
-                _typing.cast(
-                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
-                ),
-                message=_typing.cast(dict, e.detail).get("message"),
-                headers={_AUTHENTICATE_HEADER: _BASIC_AUTH_SCHEME},
+            # Re-raise with appropriate headers
+            headers = dict(e.headers) if e.headers else {}
+            headers.update({_AUTHENTICATE_HEADER: _BASIC_AUTH_SCHEME})
+            raise _fastapi.HTTPException(
+                status_code=e.status_code, detail=e.detail, headers=headers
             )
 
     async def combined_auth(
@@ -299,14 +253,13 @@ class AuthHandler:
                 basic=None, bearer=bearer, api_key=api_key, sec=sec
             )
         except _fastapi.HTTPException as e:
-            raise _handler.build_exception(
-                _typing.cast(
-                    _AUTH_ERROR_CODES, _typing.cast(dict, e.detail).get("code")
-                ),
-                message=_typing.cast(dict, e.detail).get("message"),
-                headers={
-                    _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}"
-                },
+            # Re-raise with appropriate headers
+            headers = dict(e.headers) if e.headers else {}
+            headers.update(
+                {_AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}"}
+            )
+            raise _fastapi.HTTPException(
+                status_code=e.status_code, detail=e.detail, headers=headers
             )
 
     async def full_auth(
@@ -362,9 +315,9 @@ class AuthHandler:
         if first_error:
             raise first_error
         else:
-            raise _handler.build_exception(
-                "no_credentials",
-                message="No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
+            raise _fastapi.HTTPException(
+                status_code=401,
+                detail="No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
                 headers={
                     _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}, {_BASIC_AUTH_SCHEME}"
                 },

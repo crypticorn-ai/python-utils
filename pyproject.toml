@@ -26,7 +26,6 @@ include = ["crypticorn_utils*"]
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements/main.txt"] }
 optional-dependencies.dev = { file = ["requirements/dev.txt"] }
-optional-dependencies.test = { file = ["requirements/test.txt"] }
 
 [tool.setuptools.package-data]
 "crypticorn_utils" = ["py.typed"]

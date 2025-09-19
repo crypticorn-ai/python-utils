@@ -166,7 +166,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Depends(_apikey_header)
         ] = None,
-        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the API key and checks the scopes.
@@ -191,7 +191,7 @@ class AuthHandler:
             _typing.Union[_fastapi_security.HTTPAuthorizationCredentials, None],
             _fastapi.Depends(_http_bearer),
         ] = None,
-        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and checks the scopes.
@@ -216,13 +216,14 @@ class AuthHandler:
             _typing.Union[_fastapi_security.HTTPBasicCredentials, None],
             _fastapi.Depends(_http_basic),
         ],
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the basic authentication credentials. This authentication method should just be used in cases where JWT and API key authentication are not desired or not possible.
         """
         try:
             return await self.full_auth(
-                basic=credentials, bearer=None, api_key=None, sec=None
+                basic=credentials, bearer=None, api_key=None, sec=sec
             )
         except _fastapi.HTTPException as e:
             # Re-raise with appropriate headers
@@ -241,7 +242,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Depends(_apikey_header)
         ] = None,
-        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and/or API key and checks the scopes.
@@ -276,7 +277,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Depends(_apikey_header)
         ] = None,
-        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         IMPORTANT: combined_auth is sufficient for most use cases.
@@ -332,7 +333,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Query()
         ] = None,
-        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the API key and checks the scopes.
@@ -346,7 +347,7 @@ class AuthHandler:
         bearer: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Query()
         ] = None,
-        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and checks the scopes.
@@ -370,7 +371,7 @@ class AuthHandler:
         api_key: _typing_extensions.Annotated[
             _typing.Union[str, None], _fastapi.Query()
         ] = None,
-        sec: _typing.Union[None, _fastapi_security.SecurityScopes] = None,
+        sec: _fastapi_security.SecurityScopes = _fastapi_security.SecurityScopes(),
     ) -> _crypticorn_auth.Verify200Response:
         """
         Verifies the bearer token and/or API key and checks the scopes.

@@ -9,6 +9,7 @@ import typing_extensions as _typing_extensions
 from .types import BaseUrl
 
 _AUTHENTICATE_HEADER = "WWW-Authenticate"
+_AUTHENTICATE_SCOPES_HEADER = "WWW-Authenticate-Scopes"
 _BEARER_AUTH_SCHEME = "Bearer"
 _APIKEY_AUTH_SCHEME = "X-API-Key"
 _BASIC_AUTH_SCHEME = "Basic"
@@ -315,12 +316,15 @@ class AuthHandler:
         if first_error:
             raise first_error
         else:
+            headers = {
+                _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}, {_BASIC_AUTH_SCHEME}",
+            }
+            if len(sec.scopes) > 0:
+                headers[_AUTHENTICATE_SCOPES_HEADER] = sec.scope_str
             raise _fastapi.HTTPException(
                 status_code=401,
                 detail="No credentials provided. Check the WWW-Authenticate header for the available authentication methods.",
-                headers={
-                    _AUTHENTICATE_HEADER: f"{_BEARER_AUTH_SCHEME}, {_APIKEY_AUTH_SCHEME}, {_BASIC_AUTH_SCHEME}"
-                },
+                headers=headers,
             )
 
     async def ws_api_key_auth(

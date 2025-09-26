@@ -14,7 +14,7 @@ from .pagination import (
     SortFilterParams,
     SortParams,
 )
-from .types import ApiEnv, BaseUrl
+from .types import ApiEnv, BaseUrl, error_response
 from .utils import datetime_to_timestamp, gen_random_id, optional_import
 
 __all__ = [
@@ -38,4 +38,5 @@ __all__ = [
     "datetime_to_timestamp",
     "optional_import",
     "registry",
+    "error_response",
 ]

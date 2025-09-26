@@ -1,6 +1,8 @@
 import enum as _enum
 import typing as _typing
 
+from pydantic import BaseModel
+
 ApiEnv = _typing.Literal["prod", "dev", "local", "docker"]
 
 
@@ -23,3 +25,22 @@ class BaseUrl(_enum.StrEnum):
             return cls.LOCAL
         elif env == "docker":
             return cls.DOCKER
+
+
+class ErrorResponse(BaseModel):
+    """
+    Error response schema.
+    """
+
+    detail: str
+
+
+error_response = {
+    "default": {
+        "model": ErrorResponse,
+        "description": "Error response",
+    },
+}
+"""
+Error response schema openapi definition.
+"""

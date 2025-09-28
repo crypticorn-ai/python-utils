@@ -3,6 +3,7 @@ import typing as _typing
 
 import fastapi as _fastapi
 import starlette.middleware.base as _starlette_middleware_base
+import starlette.middleware.cors as _starlette_middleware_cors
 
 from .metrics import (
     HTTP_REQUEST_DURATION,
@@ -86,7 +87,7 @@ def add_middleware(
 
     if "cors" in include:
         app.add_middleware(
-            _fastapi.middleware.cors.CORSMiddleware,
+            _starlette_middleware_cors.CORSMiddleware,
             allow_origins=[
                 "http://localhost:5173",  # vite dev server
                 "http://localhost:4173",  # vite preview server

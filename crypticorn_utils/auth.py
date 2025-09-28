@@ -56,6 +56,7 @@ class AuthHandler:
         """
         Verifies the API key.
         """
+        self.client.config.access_token = None  # ensure no Authorization header
         self.client.config.api_key = {"APIKeyHeader": api_key}
         return await self.client.login.verify()  # type: ignore[misc]
 
@@ -65,6 +66,7 @@ class AuthHandler:
         """
         Verifies the bearer token.
         """
+        self.client.config.api_key = {}  # ensure no X-API-Key header
         self.client.config.access_token = bearer.credentials
         return await self.client.login.verify()  # type: ignore[misc]
 

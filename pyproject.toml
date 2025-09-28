@@ -5,7 +5,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{name = "Crypticorn", email = "timon@crypticorn.com"}]
-version = "2.2.0"
+version = "2.2.1"
 dynamic = ["dependencies", "optional-dependencies"]
 
 classifiers = [

@@ -323,6 +323,45 @@ async def test_ws_api_key_auth_with_valid_key(auth_handler: AuthHandler):
     assert len(res.scopes) == 1
 
 
+# HEADER CONFLICT TESTS
+@pytest.mark.asyncio
+async def test_auth_header_conflict_prevention(auth_handler: AuthHandler):
+    """Test that API key auth clears bearer token to prevent header conflicts"""
+    # First set a bearer token (simulating previous request)
+    auth_handler.client.config.access_token = "some-jwt-token"
+
+    # Now use API key auth - should clear the bearer token
+    res = await auth_handler.api_key_auth(api_key=ONE_SCOPE_API_KEY)
+
+    # Verify API key auth worked correctly
+    assert ONE_SCOPE_API_KEY_SCOPE in res.scopes
+    assert len(res.scopes) == 1
+
+    # Verify bearer token was cleared (client should not have access_token set)
+    assert auth_handler.client.config.access_token is None
+    assert auth_handler.client.config.api_key is not None
+
+
+@pytest.mark.asyncio
+async def test_bearer_header_conflict_prevention(auth_handler: AuthHandler):
+    """Test that bearer auth clears API key to prevent header conflicts"""
+    # First set an API key (simulating previous request)
+    auth_handler.client.config.api_key = {"APIKeyHeader": "some-api-key"}
+
+    # Now use bearer auth - should clear the API key
+    res = await auth_handler.bearer_auth(
+        bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT)
+    )
+
+    # Verify bearer auth worked correctly
+    assert not res.admin
+    assert all([key not in res.scopes for key in PURCHASEABLE_SCOPES])
+
+    # Verify API key was cleared (client should not have api_key set)
+    assert auth_handler.client.config.api_key == {}
+    assert auth_handler.client.config.access_token is not None
+
+
 # SCOPE VALIDATION TESTS
 @pytest.mark.asyncio
 async def test_combined_auth_scope_validation_with_insufficient_scopes(

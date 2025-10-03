@@ -64,7 +64,7 @@ async def generate_api_key(
         base_url=BaseUrl.from_env(cast(ApiEnv, API_ENV)),
         jwt=await generate_valid_jwt(user_id=user_id, scopes=scopes),
     ) as api_client:
-        res = await api_client.auth.login.create_api_key(
+        res = await api_client.auth.create_api_key(
             CreateApiKeyRequest(
                 name=f"pytest-{gen_random_id()}",
                 scopes=scopes,

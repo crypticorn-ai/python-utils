@@ -454,6 +454,83 @@ async def test_full_auth_with_scopes_header(auth_handler: AuthHandler):
 
 
 @pytest.mark.asyncio
+async def test_full_auth_basic_credentials_branch(auth_handler: AuthHandler):
+    """Test full_auth with basic credentials to cover the basic auth branch"""
+    from fastapi.security import HTTPBasicCredentials
+    
+    # This should fail with invalid credentials, but it will exercise the basic auth branch
+    with pytest.raises(HTTPException) as e:
+        await auth_handler.full_auth(
+            bearer=None,
+            api_key=None,
+            basic=HTTPBasicCredentials(username="test", password="test")
+        )
+    
+    assert e.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_full_auth_with_scopes_validation(auth_handler: AuthHandler):
+    """Test full_auth with scopes validation to cover the sec branch"""
+    from fastapi.security import SecurityScopes, HTTPAuthorizationCredentials
+    
+    # Test with valid bearer token and scopes
+    res = await auth_handler.full_auth(
+        bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT),
+        api_key=None,
+        basic=None,
+        sec=SecurityScopes(scopes=["read:trade:bots"])  # This scope should be available
+    )
+    assert not res.admin
+
+
+@pytest.mark.asyncio
+async def test_full_auth_multiple_errors_branch(auth_handler: AuthHandler):
+    """Test full_auth with multiple failed attempts to cover the first_error branch"""
+    from fastapi.security import HTTPAuthorizationCredentials, HTTPBasicCredentials
+    
+    # Test with multiple invalid credentials to trigger the first_error branch
+    with pytest.raises(HTTPException) as e:
+        await auth_handler.full_auth(
+            bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid1"),
+            api_key="invalid2",
+            basic=HTTPBasicCredentials(username="invalid3", password="invalid3")
+        )
+    
+    # Should raise the first error encountered
+    assert e.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_full_auth_without_scopes_validation(auth_handler: AuthHandler):
+    """Test full_auth without scopes validation to cover the sec=False branch"""
+    from fastapi.security import HTTPAuthorizationCredentials
+    
+    # Test with valid bearer token but no scopes (sec=None)
+    res = await auth_handler.full_auth(
+        bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT),
+        api_key=None,
+        basic=None,
+        sec=None  # This should trigger the sec=False branch
+    )
+    assert not res.admin
+
+
+@pytest.mark.asyncio
+async def test_full_auth_non_basic_credentials_branch(auth_handler: AuthHandler):
+    """Test full_auth with non-basic credentials to cover the basic auth False branch"""
+    from fastapi.security import HTTPAuthorizationCredentials
+    
+    # Test with bearer token (not basic credentials) to trigger the basic auth False branch
+    res = await auth_handler.full_auth(
+        bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT),
+        api_key=None,
+        basic=None  # This should trigger the basic auth False branch
+    )
+    assert not res.admin
+
+
+@pytest.mark.asyncio
 async def test_full_auth_res_is_none_continue(auth_handler: AuthHandler):
     """Test full_auth continues when verification returns None"""
     from unittest.mock import AsyncMock, patch

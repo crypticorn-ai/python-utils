@@ -25,6 +25,8 @@ class BaseUrl(_enum.StrEnum):
             return cls.LOCAL
         elif env == "docker":
             return cls.DOCKER
+        else:
+            raise ValueError(f"Invalid environment: {env}")
 
 
 class ErrorResponse(BaseModel):

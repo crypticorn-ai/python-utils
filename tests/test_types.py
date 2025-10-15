@@ -49,6 +49,13 @@ class TestBaseUrl:
         assert result == BaseUrl.DOCKER
         assert result == "http://host.docker.internal"
 
+    def test_from_env_invalid_environment(self):
+        """Test from_env method with invalid environment (should raise error)."""
+        # Since ApiEnv is a Literal type, this should be caught by type checking
+        # But we can test the runtime behavior by bypassing type checking
+        with pytest.raises(ValueError, match="Invalid environment: invalid_env"):
+            BaseUrl.from_env("invalid_env")  # type: ignore
+
 
 class TestErrorResponse:
     """Test the ErrorResponse Pydantic model."""

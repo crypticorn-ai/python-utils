@@ -196,6 +196,70 @@ class TestConfigureLogging:
             logger.handlers.extend(original_handlers)
             logger.propagate = True
 
+    def test_configure_logging_with_filters(self):
+        """Test configure_logging with custom filters."""
+        logger_name = "filter_test_logger"
+        logger = logging.getLogger(logger_name)
+        
+        # Create a custom filter that only allows INFO level and above
+        class InfoLevelFilter(logging.Filter):
+            def filter(self, record):
+                return record.levelno >= logging.INFO
+        
+        # Clear any existing handlers
+        original_handlers = logger.handlers.copy()
+        logger.handlers.clear()
+        
+        try:
+            # Test with filters for stdout only
+            configure_logging(name=logger_name, filters=[InfoLevelFilter()])
+            
+            # Check that handler was added and has the filter
+            assert len(logger.handlers) == 1
+            assert len(logger.handlers[0].filters) == 1
+            assert isinstance(logger.handlers[0].filters[0], InfoLevelFilter)
+        finally:
+            # Restore original state
+            logger.handlers.clear()
+            logger.handlers.extend(original_handlers)
+            logger.propagate = True
+
+    def test_configure_logging_with_filters_and_file(self):
+        """Test configure_logging with filters for both stdout and file handlers."""
+        logger_name = "filter_file_test_logger"
+        logger = logging.getLogger(logger_name)
+        
+        # Create a custom filter
+        class CustomFilter(logging.Filter):
+            def filter(self, record):
+                return "test" in record.getMessage()
+        
+        # Clear any existing handlers
+        original_handlers = logger.handlers.copy()
+        logger.handlers.clear()
+        
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                log_file = os.path.join(temp_dir, "test.log")
+                
+                # Test with filters for both stdout and file
+                configure_logging(
+                    name=logger_name, 
+                    log_file=log_file,
+                    filters=[CustomFilter()]
+                )
+                
+                # Check that both handlers were added and have the filter
+                assert len(logger.handlers) == 2
+                for handler in logger.handlers:
+                    assert len(handler.filters) == 1
+                    assert isinstance(handler.filters[0], CustomFilter)
+        finally:
+            # Restore original state
+            logger.handlers.clear()
+            logger.handlers.extend(original_handlers)
+            logger.propagate = True
+
 
 class TestDisableLogging:
     """Test the disable_logging function."""

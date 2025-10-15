@@ -1,3 +1,5 @@
+from typing import Literal, Optional
+
 import pytest
 from pydantic import BaseModel, ValidationError
 
@@ -137,6 +139,55 @@ async def test_filter_params():
     params = FilterParams[Item](filter_by="name", filter_value="test")
     assert params.filter_by == "name"
     assert params.filter_value == "test"
+
+
+class Econ(BaseModel):
+    impact: Optional[Literal["Low", "Medium", "High"]]
+    previous: Optional[float]
+    flag: Optional[bool]
+    label: str
+
+
+@pytest.mark.asyncio
+async def test_filter_params_literal_optional_valid():
+    params = FilterParams[Econ](filter_by="impact", filter_value="High")
+    assert params.filter_value == "High"
+
+
+@pytest.mark.asyncio
+async def test_filter_params_literal_optional_none_text():
+    params = FilterParams[Econ](filter_by="impact", filter_value="none")
+    assert params.filter_value is None
+
+
+@pytest.mark.asyncio
+async def test_filter_params_literal_optional_invalid_raises_value_error():
+    with pytest.raises(ValueError):
+        FilterParams[Econ](filter_by="impact", filter_value="INVALID")
+
+
+@pytest.mark.asyncio
+async def test_filter_params_float_coercion():
+    params = FilterParams[Econ](filter_by="previous", filter_value="1.23")
+    assert params.filter_value == 1.23
+
+
+@pytest.mark.asyncio
+async def test_filter_params_bool_coercion_truthy():
+    params = FilterParams[Econ](filter_by="flag", filter_value="true")
+    assert params.filter_value is True
+
+
+@pytest.mark.asyncio
+async def test_filter_params_bool_coercion_falsy():
+    params = FilterParams[Econ](filter_by="flag", filter_value="0")
+    assert params.filter_value is False
+
+
+@pytest.mark.asyncio
+async def test_filter_params_string_passthrough():
+    params = FilterParams[Econ](filter_by="label", filter_value="Hello")
+    assert params.filter_value == "Hello"
 
     # Test default values
     params = FilterParams[Item]()

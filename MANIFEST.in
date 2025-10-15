@@ -1,3 +1,0 @@
-include crypticorn_utils/py.typed
-include README.md
-include LICENSE

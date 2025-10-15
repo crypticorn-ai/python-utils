@@ -395,3 +395,81 @@ async def test_combined_auth_scope_validation_with_sufficient_scopes(
         sec=SecurityScopes(scopes=[ONE_SCOPE_API_KEY_SCOPE]),
     )
     assert ONE_SCOPE_API_KEY_SCOPE in res.scopes
+
+
+# MISSING BRANCH COVERAGE TESTS
+@pytest.mark.asyncio
+async def test_extract_message_json_decode_error(auth_handler: AuthHandler):
+    """Test _extract_message with JSON decode error"""
+    import crypticorn.auth.client.exceptions as auth_exceptions
+    
+    # Create a mock ApiException with invalid JSON body
+    mock_exception = auth_exceptions.ApiException(status=400, reason="Bad Request")
+    mock_exception.body = "invalid json content"
+    
+    result = await auth_handler._extract_message(mock_exception)
+    assert result == "invalid json content"
+
+
+@pytest.mark.asyncio
+async def test_extract_message_no_message_key(auth_handler: AuthHandler):
+    """Test _extract_message when JSON has no 'message' key"""
+    import crypticorn.auth.client.exceptions as auth_exceptions
+    
+    # Create a mock ApiException with JSON body without 'message' key
+    mock_exception = auth_exceptions.ApiException(status=400, reason="Bad Request")
+    mock_exception.body = '{"error": "some error", "code": 123}'
+    
+    result = await auth_handler._extract_message(mock_exception)
+    assert result == {"error": "some error", "code": 123}
+
+
+@pytest.mark.asyncio
+async def test_handle_exception_generic_exception(auth_handler: AuthHandler):
+    """Test _handle_exception with generic exception"""
+    generic_exception = ValueError("Some generic error")
+    
+    result = await auth_handler._handle_exception(generic_exception)
+    assert isinstance(result, HTTPException)
+    assert result.status_code == 500
+    assert result.detail == "Some generic error"
+
+
+@pytest.mark.asyncio
+async def test_full_auth_with_scopes_header(auth_handler: AuthHandler):
+    """Test full_auth adds scopes header when scopes are required"""
+    from fastapi.security import SecurityScopes
+    
+    with pytest.raises(HTTPException) as e:
+        await auth_handler.full_auth(
+            bearer=None,
+            api_key=None,
+            basic=None,
+            sec=SecurityScopes(scopes=["read:admin"])
+        )
+    
+    assert e.value.status_code == 401
+    assert "WWW-Authenticate-Scopes" in e.value.headers
+    assert e.value.headers["WWW-Authenticate-Scopes"] == "read:admin"
+
+
+@pytest.mark.asyncio
+async def test_full_auth_res_is_none_continue(auth_handler: AuthHandler):
+    """Test full_auth continues when verification returns None"""
+    from unittest.mock import AsyncMock, patch
+    from fastapi.security import HTTPAuthorizationCredentials
+    
+    # Mock _verify_bearer to return None (simulating some edge case)
+    with patch.object(auth_handler, '_verify_bearer', new_callable=AsyncMock) as mock_verify:
+        mock_verify.return_value = None
+        
+        # This should raise 401 since no valid credentials were found
+        with pytest.raises(HTTPException) as e:
+            await auth_handler.full_auth(
+                bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials="test"),
+                api_key=None,
+                basic=None
+            )
+        
+        assert e.value.status_code == 401
+        assert "No credentials provided" in str(e.value.detail)

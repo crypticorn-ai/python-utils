@@ -58,7 +58,7 @@ class AuthHandler:
         """
         self.client.config.access_token = None  # ensure no Authorization header
         self.client.config.api_key = {"APIKeyHeader": api_key}
-        return await self.client.login.verify()  # type: ignore[misc]
+        return await self.client.verify()  # type: ignore[misc]
 
     async def _verify_bearer(
         self, bearer: _fastapi_security.HTTPAuthorizationCredentials
@@ -68,7 +68,7 @@ class AuthHandler:
         """
         self.client.config.api_key = {}  # ensure no X-API-Key header
         self.client.config.access_token = bearer.credentials
-        return await self.client.login.verify()  # type: ignore[misc]
+        return await self.client.verify()  # type: ignore[misc]
 
     async def _verify_basic(
         self, basic: _fastapi_security.HTTPBasicCredentials
@@ -76,7 +76,7 @@ class AuthHandler:
         """
         Verifies the basic authentication credentials.
         """
-        return await self.client.login.verify_basic_auth(basic.username, basic.password)  # type: ignore[misc]
+        return await self.client.verify_basic_auth(basic.username, basic.password)  # type: ignore[misc]
 
     async def _validate_scopes(
         self, api_scopes: list[str], user_scopes: list[str]

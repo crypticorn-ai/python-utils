@@ -10,6 +10,7 @@ from crypticorn_utils.pagination import (
     PageFilterParams,
     PageSortFilterParams,
     PageSortParams,
+    PaginatedResponse,
     PaginationParams,
     SortFilterParams,
     SortParams,
@@ -384,3 +385,75 @@ async def test_field_type_validation():
 
     params = PageSortFilterParams[Item](filter_by="name", filter_value="test")
     assert params.filter_value == "test"
+
+
+# MISSING BRANCH COVERAGE TESTS
+@pytest.mark.asyncio
+async def test_paginated_response_get_next_page():
+    """Test get_next_page in various scenarios"""
+    # Test when there is a next page
+    result = PaginatedResponse.get_next_page(total=100, page_size=10, page=5)
+    assert result == 6
+    
+    # Test when page is the last page
+    result = PaginatedResponse.get_next_page(total=100, page_size=10, page=10)
+    assert result is None
+    
+    # Test when page is beyond the last page
+    result = PaginatedResponse.get_next_page(total=100, page_size=10, page=11)
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_paginated_response_get_prev_page():
+    """Test get_prev_page in various scenarios"""
+    # Test when there is a previous page
+    result = PaginatedResponse.get_prev_page(page=5)
+    assert result == 4
+    
+    # Test when page is 1
+    result = PaginatedResponse.get_prev_page(page=1)
+    assert result is None
+    
+    # Test when page is 0 or negative
+    result = PaginatedResponse.get_prev_page(page=0)
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_paginated_response_get_last_page_zero_total():
+    """Test get_last_page with zero total items"""
+    result = PaginatedResponse.get_last_page(total=0, page_size=10)
+    assert result == 1  # Should return max(1, 0) = 1
+
+
+@pytest.mark.asyncio
+async def test_sort_params_invalid_order_validation():
+    """Test sort_order validation with invalid values"""
+    # This should be caught by the _validate_sort method, not Pydantic's Literal validation
+    # We need to test the internal validation logic
+    from crypticorn_utils.pagination import SortParams
+    
+    # Create a SortParams instance and manually call _validate_sort
+    params = SortParams[Item]()
+    params.sort_by = "name"
+    params.sort_order = "invalid_order"  # This will pass Pydantic validation but fail internal validation
+    
+    with pytest.raises(ValueError, match="Invalid order: 'invalid_order' — must be one of: \\['asc', 'desc'\\]"):
+        params._validate_sort()
+
+
+@pytest.mark.asyncio
+async def test_enforce_field_type_none_annotation():
+    """Test _enforce_field_type when expected_type is None"""
+    from crypticorn_utils.pagination import _enforce_field_type
+    from unittest.mock import MagicMock
+    
+    # Create a mock model with a field that has None annotation
+    mock_model = MagicMock()
+    mock_model.model_fields = {"test_field": MagicMock()}
+    mock_model.model_fields["test_field"].annotation = None
+    
+    # Test that it returns the value as-is when annotation is None
+    result = _enforce_field_type(mock_model, "test_field", "some_value")
+    assert result == "some_value"

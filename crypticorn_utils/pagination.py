@@ -281,30 +281,52 @@ class HeavyPageSortFilterParams(
         return self
 
 
+_FIELD_ADAPTER_CACHE: dict[tuple[type, str], _pydantic.TypeAdapter] = {}
+
+
+def _get_field_adapter(
+    model: _typing.Type[_pydantic.BaseModel], field_name: str
+) -> _pydantic.TypeAdapter:
+    key = (model, field_name)
+    adapter = _FIELD_ADAPTER_CACHE.get(key)
+    if adapter is not None:
+        return adapter
+    expected_type = model.model_fields[field_name].annotation
+    adapter = _pydantic.TypeAdapter(expected_type)
+    _FIELD_ADAPTER_CACHE[key] = adapter
+    return adapter
+
+
 def _enforce_field_type(
     model: _typing.Type[_pydantic.BaseModel], field_name: str, value: _typing.Any
 ) -> _typing.Any:
     """
-    Coerce or validate `value` to match the type of `field_name` on the given `model`. Should be used after checking that the field is valid.
+    Coerce or validate `value` by leveraging Pydantic's TypeAdapter for the field's
+    annotation. This supports Optional/Union/Literal and standard primitives using
+    Pydantic's well-tested conversion rules.
 
-    :param model: The Pydantic model.
-    :param field_name: The name of the field to match.
-    :param value: The value to validate or coerce.
-
-    :return: The value cast to the expected type.
-
-    :raises: ValueError: If the field doesn't exist or coercion fails.
+    Raises ValueError on validation errors to preserve previous behavior.
     """
-    expected_type = model.model_fields[field_name].annotation
 
+    expected_type = model.model_fields[field_name].annotation
     if expected_type is None:
         return value
 
-    if isinstance(value, expected_type):
-        return value
-
     try:
-        return expected_type(value)
+        # Pre-normalize textual nulls for Optional/Union[..., None]
+        origin = _typing.get_origin(expected_type)
+        if origin is _typing.Union:
+            args = _typing.get_args(expected_type)
+            allows_none = any(a is type(None) for a in args)
+            if (
+                allows_none
+                and isinstance(value, str)
+                and value.strip().lower() in ("none", "null", "")
+            ):
+                value = None
+
+        adapter = _get_field_adapter(model, field_name)
+        return adapter.validate_python(value)
     except Exception:
         raise ValueError(
             f"Expected {expected_type} for field {field_name}, got {type(value)}"

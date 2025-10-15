@@ -31,6 +31,9 @@ jobs:
       - name: Check-out repository
         uses: actions/checkout@v4
 
+      - name: Generate .env
+        run: ./scripts/merge-env.sh
+
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:

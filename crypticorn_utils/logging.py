@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime as _datetime
 import enum as _enum
 import logging as _logging

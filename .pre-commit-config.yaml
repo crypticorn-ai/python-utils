@@ -1,11 +1,9 @@
 # https://pre-commit.com/
 # pre commit hooks for python
-# install with:
-# uv sync --only-dev
+# uv tool install pre-commit
 # pre-commit install
 # pre-commit run --all-files
 
-# somehow `noqa` is not working for some reason, thus ignoring globally, should be checked from time to time
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.0
@@ -25,3 +23,14 @@ repos:
         files: ^crypticorn_utils/
         args: [--config-file=mypy.ini]
         additional_dependencies: [pydantic>=2.0.0]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        files: "^crypticorn_utils"
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace

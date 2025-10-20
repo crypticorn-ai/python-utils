@@ -47,9 +47,9 @@ class TestCustomFormatter:
             name="test", level=logging.INFO, pathname="", lineno=0,
             msg="test message", args=(), exc_info=None
         )
-        
+
         formatted = formatter.format(record)
-        
+
         # Check that levelcolor was added to the record
         assert hasattr(record, 'levelcolor')
         assert record.levelcolor == C.BLUE_BRIGHT
@@ -63,12 +63,12 @@ class TestCustomFormatter:
             name="test", level=logging.INFO, pathname="", lineno=0,
             msg="test message", args=(), exc_info=None
         )
-        
+
         # Mock the timestamp to have microseconds
         record.created = 1234567890.123456
-        
+
         formatted_time = formatter.formatTime(record)
-        
+
         # Should trim last 3 digits (456) from microseconds (123456)
         # So 123456 microseconds becomes 1234 (trimming last 3 digits)
         assert formatted_time.endswith("1234")
@@ -83,10 +83,10 @@ class TestConfigureLogging:
         root_logger = logging.getLogger()
         original_handlers = root_logger.handlers.copy()
         root_logger.handlers.clear()
-        
+
         try:
             configure_logging()
-            
+
             # Check that handler was added
             assert len(root_logger.handlers) == 1
             assert isinstance(root_logger.handlers[0], logging.StreamHandler)
@@ -100,14 +100,14 @@ class TestConfigureLogging:
         """Test configuring a named logger."""
         logger_name = "test_logger"
         logger = logging.getLogger(logger_name)
-        
+
         # Clear any existing handlers
         original_handlers = logger.handlers.copy()
         logger.handlers.clear()
-        
+
         try:
             configure_logging(name=logger_name)
-            
+
             # Check that handler was added and propagate is False
             assert len(logger.handlers) == 1
             assert not logger.propagate
@@ -123,20 +123,20 @@ class TestConfigureLogging:
             log_file = os.path.join(temp_dir, "test.log")
             logger_name = "file_test_logger"
             logger = logging.getLogger(logger_name)
-            
+
             # Clear any existing handlers
             original_handlers = logger.handlers.copy()
             logger.handlers.clear()
-            
+
             try:
                 configure_logging(name=logger_name, log_file=log_file)
-                
+
                 # Check that both stdout and file handlers were added
                 assert len(logger.handlers) == 2
                 handler_types = [type(h).__name__ for h in logger.handlers]
                 assert "StreamHandler" in handler_types
                 assert "RotatingFileHandler" in handler_types
-                
+
                 # Check that log file was created
                 assert os.path.exists(log_file)
             finally:
@@ -149,21 +149,21 @@ class TestConfigureLogging:
         """Test configuring logging with custom log levels."""
         logger_name = "custom_level_logger"
         logger = logging.getLogger(logger_name)
-        
+
         # Clear any existing handlers
         original_handlers = logger.handlers.copy()
         logger.handlers.clear()
-        
+
         try:
             configure_logging(
                 name=logger_name,
                 stdout_level=logging.DEBUG,
                 file_level=logging.ERROR
             )
-            
+
             # Check that logger level is set to most verbose (DEBUG)
             assert logger.level == logging.DEBUG
-            
+
             # Check handler levels
             for handler in logger.handlers:
                 if isinstance(handler, logging.StreamHandler):
@@ -178,15 +178,15 @@ class TestConfigureLogging:
         """Test that configure_logging clears existing handlers."""
         logger_name = "clear_test_logger"
         logger = logging.getLogger(logger_name)
-        
+
         # Add a dummy handler
         dummy_handler = logging.StreamHandler()
         logger.addHandler(dummy_handler)
         original_handlers = logger.handlers.copy()
-        
+
         try:
             configure_logging(name=logger_name)
-            
+
             # Check that only one handler exists (the new one)
             assert len(logger.handlers) == 1
             assert logger.handlers[0] != dummy_handler
@@ -200,20 +200,20 @@ class TestConfigureLogging:
         """Test configure_logging with custom filters."""
         logger_name = "filter_test_logger"
         logger = logging.getLogger(logger_name)
-        
+
         # Create a custom filter that only allows INFO level and above
         class InfoLevelFilter(logging.Filter):
             def filter(self, record):
                 return record.levelno >= logging.INFO
-        
+
         # Clear any existing handlers
         original_handlers = logger.handlers.copy()
         logger.handlers.clear()
-        
+
         try:
             # Test with filters for stdout only
             configure_logging(name=logger_name, filters=[InfoLevelFilter()])
-            
+
             # Check that handler was added and has the filter
             assert len(logger.handlers) == 1
             assert len(logger.handlers[0].filters) == 1
@@ -228,27 +228,27 @@ class TestConfigureLogging:
         """Test configure_logging with filters for both stdout and file handlers."""
         logger_name = "filter_file_test_logger"
         logger = logging.getLogger(logger_name)
-        
+
         # Create a custom filter
         class CustomFilter(logging.Filter):
             def filter(self, record):
                 return "test" in record.getMessage()
-        
+
         # Clear any existing handlers
         original_handlers = logger.handlers.copy()
         logger.handlers.clear()
-        
+
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 log_file = os.path.join(temp_dir, "test.log")
-                
+
                 # Test with filters for both stdout and file
                 configure_logging(
-                    name=logger_name, 
+                    name=logger_name,
                     log_file=log_file,
                     filters=[CustomFilter()]
                 )
-                
+
                 # Check that both handlers were added and have the filter
                 assert len(logger.handlers) == 2
                 for handler in logger.handlers:
@@ -268,10 +268,10 @@ class TestDisableLogging:
         """Test that disable_logging disables the crypticorn logger."""
         logger_name = "crypticorn"
         logger = logging.getLogger(logger_name)
-        
+
         # Store original disabled state
         original_disabled = logger.disabled
-        
+
         try:
             disable_logging()
             assert logger.disabled is True

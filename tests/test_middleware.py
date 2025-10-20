@@ -34,12 +34,12 @@ class TestPrometheusMiddleware:
     async def test_dispatch_basic_request(self, middleware, mock_request, mock_response):
         """Test basic request dispatch without auth headers."""
         call_next = AsyncMock(return_value=mock_response)
-        
+
         with patch("crypticorn_utils.middleware.HTTP_REQUESTS_COUNT") as mock_count, \
              patch("crypticorn_utils.middleware.REQUEST_SIZE") as mock_req_size, \
              patch("crypticorn_utils.middleware.RESPONSE_SIZE") as mock_resp_size, \
              patch("crypticorn_utils.middleware.HTTP_REQUEST_DURATION") as mock_duration:
-            
+
             result = await middleware.dispatch(mock_request, call_next)
             assert result == mock_response
             call_next.assert_called_once_with(mock_request)
@@ -58,7 +58,7 @@ class TestPrometheusMiddleware:
             ({"authorization": "invalidformat"}, "none"),
             ({}, "none")
         ]
-        
+
         for headers, expected_auth_type in test_cases:
             mock_request.headers = headers
             call_next = AsyncMock(return_value=mock_response)
@@ -70,7 +70,7 @@ class TestPrometheusMiddleware:
     async def test_endpoint_extraction(self, middleware, mock_request, mock_response):
         """Test endpoint extraction with route and fallback."""
         call_next = AsyncMock(return_value=mock_response)
-        
+
         # Test with route
         mock_route = MagicMock()
         mock_route.path = "/api/v1/test"
@@ -78,7 +78,7 @@ class TestPrometheusMiddleware:
         with patch("crypticorn_utils.middleware.HTTP_REQUESTS_COUNT") as mock_count:
             await middleware.dispatch(mock_request, call_next)
             assert mock_count.labels.call_args[1]["endpoint"] == "/api/v1/test"
-        
+
         # Test fallback to path
         mock_request.scope = {"path": "/fallback/path"}
         with patch("crypticorn_utils.middleware.HTTP_REQUESTS_COUNT") as mock_count:
@@ -89,13 +89,13 @@ class TestPrometheusMiddleware:
     async def test_exception_handling(self, middleware, mock_request, mock_response):
         """Test handling of body reading exceptions."""
         call_next = AsyncMock(return_value=mock_response)
-        
+
         # Test request body exception
         mock_request.body = AsyncMock(side_effect=Exception("Body read error"))
         with patch("crypticorn_utils.middleware.REQUEST_SIZE") as mock_req_size:
             await middleware.dispatch(mock_request, call_next)
             mock_req_size.labels.assert_called_once()
-        
+
         # Test response body exception
         mock_response.body = AsyncMock(side_effect=Exception("Response read error"))
         with patch("crypticorn_utils.middleware.RESPONSE_SIZE") as mock_resp_size:
@@ -109,23 +109,23 @@ class TestAddMiddleware:
     def test_add_middleware_all_default(self):
         """Test adding all middleware by default."""
         app = FastAPI()
-        
+
         with patch.object(app, 'add_middleware') as mock_add:
             add_middleware(app)
-            
+
             # Should add both CORS and metrics middleware
             assert mock_add.call_count == 2
 
     def test_add_middleware_selective(self):
         """Test adding specific middleware types."""
         app = FastAPI()
-        
+
         # Test CORS only
         with patch.object(app, 'add_middleware') as mock_add:
             add_middleware(app, include=["cors"])
             assert mock_add.call_count == 1
             assert "CORSMiddleware" in str(mock_add.call_args[0][0])
-        
+
         # Test metrics only
         with patch.object(app, 'add_middleware') as mock_add:
             add_middleware(app, include=["metrics"])
@@ -135,10 +135,10 @@ class TestAddMiddleware:
     def test_add_middleware_cors_configuration(self):
         """Test CORS middleware configuration."""
         app = FastAPI()
-        
+
         with patch.object(app, 'add_middleware') as mock_add:
             add_middleware(app, include=["cors"])
-            
+
             cors_kwargs = mock_add.call_args[1]
             assert "http://localhost:5173" in cors_kwargs["allow_origins"]
             assert "http://localhost:4173" in cors_kwargs["allow_origins"]

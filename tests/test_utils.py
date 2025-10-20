@@ -47,7 +47,7 @@ class TestOptionalImport:
         """Test optional_import with an invalid module."""
         with pytest.raises(ImportError) as exc_info:
             optional_import("nonexistent_module_12345", "test_extra")
-        
+
         error_msg = str(exc_info.value)
         assert "Optional dependency 'nonexistent_module_12345' is required" in error_msg
         assert "pip install crypticorn[test_extra]" in error_msg

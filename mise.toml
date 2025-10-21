@@ -21,6 +21,10 @@ run = "uv sync"
 alias = "i"
 description = "Install dependencies (alias: 'i')"
 
+[tasks."install:upgrade"]
+run = "uv sync --upgrade"
+description = "Upgrade dependencies in the allowed ranges"
+
 [tasks.setup]
 run = ["mise install", "uvx pre-commit install"]
 description = "Setup the project"

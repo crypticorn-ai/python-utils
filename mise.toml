@@ -1,0 +1,38 @@
+[tools]
+uv = "0.9.4"
+
+[env]
+_.python.venv = { path = ".venv" }
+
+[tasks.lint]
+run = "uvx pre-commit run --all-files"
+description = "Run pre-commit hooks"
+
+[tasks.test]
+run = "uv run pytest tests/ -v"
+description = "Run tests with pytest"
+
+[tasks."test:cov"]
+run = "uv run pytest tests/ --cov=crypticorn_utils --cov-report=html --cov-report=term"
+description = "Run tests with coverage report"
+
+[tasks.install]
+run = "uv sync"
+alias = "i"
+description = "Install dependencies (alias: 'i')"
+
+[tasks.setup]
+run = ["mise install", "uvx pre-commit install"]
+description = "Setup the project"
+
+[tasks.build]
+run = "uv build"
+description = "Build the package"
+
+[tasks."version:dry"]
+run = "uvx --from 'python-semantic-release==10.4.1' semantic-release --noop -c pyproject.toml version"
+description = "Dry run version bump"
+
+[tasks.clean]
+run = "rm -rf build/ dist/ *.egg-info/ .pytest_cache/ .coverage"
+description = "Clean build artifacts and cache files"

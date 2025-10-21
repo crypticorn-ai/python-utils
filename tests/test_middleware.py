@@ -31,15 +31,18 @@ class TestPrometheusMiddleware:
         return response
 
     @pytest.mark.asyncio
-    async def test_dispatch_basic_request(self, middleware, mock_request, mock_response):
+    async def test_dispatch_basic_request(
+        self, middleware, mock_request, mock_response
+    ):
         """Test basic request dispatch without auth headers."""
         call_next = AsyncMock(return_value=mock_response)
 
-        with patch("crypticorn_utils.middleware.HTTP_REQUESTS_COUNT") as mock_count, \
-             patch("crypticorn_utils.middleware.REQUEST_SIZE") as mock_req_size, \
-             patch("crypticorn_utils.middleware.RESPONSE_SIZE") as mock_resp_size, \
-             patch("crypticorn_utils.middleware.HTTP_REQUEST_DURATION") as mock_duration:
-
+        with (
+            patch("crypticorn_utils.middleware.HTTP_REQUESTS_COUNT") as mock_count,
+            patch("crypticorn_utils.middleware.REQUEST_SIZE") as mock_req_size,
+            patch("crypticorn_utils.middleware.RESPONSE_SIZE") as mock_resp_size,
+            patch("crypticorn_utils.middleware.HTTP_REQUEST_DURATION") as mock_duration,
+        ):
             result = await middleware.dispatch(mock_request, call_next)
             assert result == mock_response
             call_next.assert_called_once_with(mock_request)
@@ -56,7 +59,7 @@ class TestPrometheusMiddleware:
             ({"authorization": "Basic dXNlcjpwYXNz"}, "Basic"),
             ({"x-api-key": "api-key-123"}, "X-API-KEY"),
             ({"authorization": "invalidformat"}, "none"),
-            ({}, "none")
+            ({}, "none"),
         ]
 
         for headers, expected_auth_type in test_cases:
@@ -110,7 +113,7 @@ class TestAddMiddleware:
         """Test adding all middleware by default."""
         app = FastAPI()
 
-        with patch.object(app, 'add_middleware') as mock_add:
+        with patch.object(app, "add_middleware") as mock_add:
             add_middleware(app)
 
             # Should add both CORS and metrics middleware
@@ -121,13 +124,13 @@ class TestAddMiddleware:
         app = FastAPI()
 
         # Test CORS only
-        with patch.object(app, 'add_middleware') as mock_add:
+        with patch.object(app, "add_middleware") as mock_add:
             add_middleware(app, include=["cors"])
             assert mock_add.call_count == 1
             assert "CORSMiddleware" in str(mock_add.call_args[0][0])
 
         # Test metrics only
-        with patch.object(app, 'add_middleware') as mock_add:
+        with patch.object(app, "add_middleware") as mock_add:
             add_middleware(app, include=["metrics"])
             assert mock_add.call_count == 1
             assert mock_add.call_args[0][0] == PrometheusMiddleware
@@ -136,7 +139,7 @@ class TestAddMiddleware:
         """Test CORS middleware configuration."""
         app = FastAPI()
 
-        with patch.object(app, 'add_middleware') as mock_add:
+        with patch.object(app, "add_middleware") as mock_add:
             add_middleware(app, include=["cors"])
 
             cors_kwargs = mock_add.call_args[1]

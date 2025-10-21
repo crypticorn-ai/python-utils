@@ -180,15 +180,15 @@ async def test_combined_auth_with_valid_bearer_token(auth_handler: AuthHandler):
         bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT),
         api_key=None,
     )
-    assert all(
-        [key not in res.scopes for key in PURCHASEABLE_SCOPES]
-    ), "non admin should not have access to purchaseable scopes"
-    assert all(
-        [key not in res.scopes for key in ADMIN_SCOPES]
-    ), "non admin should not have access to any of the admin keys"
-    assert all(
-        [key not in res.scopes for key in INTERNAL_SCOPES]
-    ), "non admin should not have access to any of the internal keys"
+    assert all([key not in res.scopes for key in PURCHASEABLE_SCOPES]), (
+        "non admin should not have access to purchaseable scopes"
+    )
+    assert all([key not in res.scopes for key in ADMIN_SCOPES]), (
+        "non admin should not have access to any of the admin keys"
+    )
+    assert all([key not in res.scopes for key in INTERNAL_SCOPES]), (
+        "non admin should not have access to any of the internal keys"
+    )
     assert not res.admin, "non admin should not be admin"
 
 
@@ -203,15 +203,15 @@ async def test_combined_auth_with_valid_prediction_bearer_token(
         ),
         api_key=None,
     )
-    assert all(
-        [key in res.scopes for key in ["read:predictions"]]
-    ), "non admin which purchased predictions should have access to purchaseable scopes"
-    assert all(
-        [key not in res.scopes for key in ADMIN_SCOPES]
-    ), "non admin should not have access to any of the admin keys"
-    assert all(
-        [key not in res.scopes for key in INTERNAL_SCOPES]
-    ), "non admin should not have access to any of the internal keys"
+    assert all([key in res.scopes for key in ["read:predictions"]]), (
+        "non admin which purchased predictions should have access to purchaseable scopes"
+    )
+    assert all([key not in res.scopes for key in ADMIN_SCOPES]), (
+        "non admin should not have access to any of the admin keys"
+    )
+    assert all([key not in res.scopes for key in INTERNAL_SCOPES]), (
+        "non admin should not have access to any of the internal keys"
+    )
     assert not res.admin, "non admin should not be admin"
 
 
@@ -224,15 +224,15 @@ async def test_combined_auth_with_valid_admin_bearer_token(auth_handler: AuthHan
         ),
         api_key=None,
     )
-    assert all(
-        [key in res.scopes for key in PURCHASEABLE_SCOPES]
-    ), "admin should have access to purchaseable scopes"
-    assert all(
-        [key in res.scopes for key in ADMIN_SCOPES]
-    ), "admin should have access to any of the admin keys"
-    assert all(
-        [key not in res.scopes for key in INTERNAL_SCOPES]
-    ), "admin should not have access to any of the internal keys"
+    assert all([key in res.scopes for key in PURCHASEABLE_SCOPES]), (
+        "admin should have access to purchaseable scopes"
+    )
+    assert all([key in res.scopes for key in ADMIN_SCOPES]), (
+        "admin should have access to any of the admin keys"
+    )
+    assert all([key not in res.scopes for key in INTERNAL_SCOPES]), (
+        "admin should not have access to any of the internal keys"
+    )
     assert res.admin, "admin should be true"
 
 
@@ -445,7 +445,7 @@ async def test_full_auth_with_scopes_header(auth_handler: AuthHandler):
             bearer=None,
             api_key=None,
             basic=None,
-            sec=SecurityScopes(scopes=["read:admin"])
+            sec=SecurityScopes(scopes=["read:admin"]),
         )
 
     assert e.value.status_code == 401
@@ -463,7 +463,7 @@ async def test_full_auth_basic_credentials_branch(auth_handler: AuthHandler):
         await auth_handler.full_auth(
             bearer=None,
             api_key=None,
-            basic=HTTPBasicCredentials(username="test", password="test")
+            basic=HTTPBasicCredentials(username="test", password="test"),
         )
 
     assert e.value.status_code == 401
@@ -479,7 +479,9 @@ async def test_full_auth_with_scopes_validation(auth_handler: AuthHandler):
         bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT),
         api_key=None,
         basic=None,
-        sec=SecurityScopes(scopes=["read:trade:bots"])  # This scope should be available
+        sec=SecurityScopes(
+            scopes=["read:trade:bots"]
+        ),  # This scope should be available
     )
     assert not res.admin
 
@@ -492,9 +494,11 @@ async def test_full_auth_multiple_errors_branch(auth_handler: AuthHandler):
     # Test with multiple invalid credentials to trigger the first_error branch
     with pytest.raises(HTTPException) as e:
         await auth_handler.full_auth(
-            bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid1"),
+            bearer=HTTPAuthorizationCredentials(
+                scheme="Bearer", credentials="invalid1"
+            ),
             api_key="invalid2",
-            basic=HTTPBasicCredentials(username="invalid3", password="invalid3")
+            basic=HTTPBasicCredentials(username="invalid3", password="invalid3"),
         )
 
     # Should raise the first error encountered
@@ -511,7 +515,7 @@ async def test_full_auth_without_scopes_validation(auth_handler: AuthHandler):
         bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT),
         api_key=None,
         basic=None,
-        sec=None  # This should trigger the sec=False branch
+        sec=None,  # This should trigger the sec=False branch
     )
     assert not res.admin
 
@@ -525,7 +529,7 @@ async def test_full_auth_non_basic_credentials_branch(auth_handler: AuthHandler)
     res = await auth_handler.full_auth(
         bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials=VALID_JWT),
         api_key=None,
-        basic=None  # This should trigger the basic auth False branch
+        basic=None,  # This should trigger the basic auth False branch
     )
     assert not res.admin
 
@@ -537,15 +541,19 @@ async def test_full_auth_res_is_none_continue(auth_handler: AuthHandler):
     from fastapi.security import HTTPAuthorizationCredentials
 
     # Mock _verify_bearer to return None (simulating some edge case)
-    with patch.object(auth_handler, '_verify_bearer', new_callable=AsyncMock) as mock_verify:
+    with patch.object(
+        auth_handler, "_verify_bearer", new_callable=AsyncMock
+    ) as mock_verify:
         mock_verify.return_value = None
 
         # This should raise 401 since no valid credentials were found
         with pytest.raises(HTTPException) as e:
             await auth_handler.full_auth(
-                bearer=HTTPAuthorizationCredentials(scheme="Bearer", credentials="test"),
+                bearer=HTTPAuthorizationCredentials(
+                    scheme="Bearer", credentials="test"
+                ),
                 api_key=None,
-                basic=None
+                basic=None,
             )
 
         assert e.value.status_code == 401

@@ -3,7 +3,12 @@ import os
 import tempfile
 
 
-from crypticorn_utils.logging import _LogLevel, _CustomFormatter, configure_logging, disable_logging
+from crypticorn_utils.logging import (
+    _LogLevel,
+    _CustomFormatter,
+    configure_logging,
+    disable_logging,
+)
 from crypticorn_utils.ansi_colors import AnsiColors as C
 
 
@@ -42,16 +47,22 @@ class TestCustomFormatter:
         """Test that format method adds levelcolor attribute to record."""
         # Use the default format string to test the color functionality
         from crypticorn_utils.logging import _LOGFORMAT, _DATEFMT
+
         formatter = _CustomFormatter(fmt=_LOGFORMAT, datefmt=_DATEFMT)
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test message", args=(), exc_info=None
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test message",
+            args=(),
+            exc_info=None,
         )
 
         formatted = formatter.format(record)
 
         # Check that levelcolor was added to the record
-        assert hasattr(record, 'levelcolor')
+        assert hasattr(record, "levelcolor")
         assert record.levelcolor == C.BLUE_BRIGHT
         # Check that the formatted string contains the color (using the actual string value)
         assert C.BLUE_BRIGHT.value in formatted
@@ -60,8 +71,13 @@ class TestCustomFormatter:
         """Test that formatTime trims the last 3 digits to get milliseconds."""
         formatter = _CustomFormatter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test message", args=(), exc_info=None
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test message",
+            args=(),
+            exc_info=None,
         )
 
         # Mock the timestamp to have microseconds
@@ -156,9 +172,7 @@ class TestConfigureLogging:
 
         try:
             configure_logging(
-                name=logger_name,
-                stdout_level=logging.DEBUG,
-                file_level=logging.ERROR
+                name=logger_name, stdout_level=logging.DEBUG, file_level=logging.ERROR
             )
 
             # Check that logger level is set to most verbose (DEBUG)
@@ -244,9 +258,7 @@ class TestConfigureLogging:
 
                 # Test with filters for both stdout and file
                 configure_logging(
-                    name=logger_name,
-                    log_file=log_file,
-                    filters=[CustomFilter()]
+                    name=logger_name, log_file=log_file, filters=[CustomFilter()]
                 )
 
                 # Check that both handlers were added and have the filter

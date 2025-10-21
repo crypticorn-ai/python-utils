@@ -73,7 +73,7 @@ class TestErrorResponse:
 
         # Missing required field should raise ValidationError
         with pytest.raises(ValidationError):
-            ErrorResponse()
+            ErrorResponse()  # type: ignore[call-arg]
 
     def test_error_response_json(self):
         """Test ErrorResponse JSON serialization."""

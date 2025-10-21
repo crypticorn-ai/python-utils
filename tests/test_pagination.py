@@ -104,13 +104,13 @@ async def test_sort_params():
 async def test_sort_order_validation():
     # Test invalid order values - this should be caught by Pydantic's Literal validation
     with pytest.raises(ValidationError):
-        SortParams[Item](sort_by="name", sort_order="invalid")
+        SortParams[Item](sort_by="name", sort_order="invalid")  # type: ignore[arg-type]
 
     # Test valid order values
-    params = SortParams[Item](sort_by="name", sort_order="asc")
+    params = SortParams[Item](sort_by="name", sort_order="asc")  # type: ignore[arg-type]
     assert params.sort_order == "asc"
 
-    params = SortParams[Item](sort_by="name", sort_order="desc")
+    params = SortParams[Item](sort_by="name", sort_order="desc")  # type: ignore[arg-type]
     assert params.sort_order == "desc"
 
 
@@ -187,35 +187,35 @@ async def test_filter_params_bool_coercion_falsy():
 
 @pytest.mark.asyncio
 async def test_filter_params_string_passthrough():
-    params = FilterParams[Econ](filter_by="label", filter_value="Hello")
-    assert params.filter_value == "Hello"
+    params1 = FilterParams[Econ](filter_by="label", filter_value="Hello")
+    assert params1.filter_value == "Hello"
 
     # Test default values
-    params = FilterParams[Item]()
-    assert params.filter_by is None
-    assert params.filter_value is None
+    params2 = FilterParams[Item]()
+    assert params2.filter_by is None
+    assert params2.filter_value is None
 
 
 @pytest.mark.asyncio
 async def test_sort_filter_params():
     # Test combined functionality
-    params = SortFilterParams[Item](
+    params1 = SortFilterParams[Item](
         sort_by="value",
         sort_order="desc",
         filter_by="name",
         filter_value="test",
     )
-    assert params.sort_by == "value"
-    assert params.sort_order == "desc"
-    assert params.filter_by == "name"
-    assert params.filter_value == "test"
+    assert params1.sort_by == "value"
+    assert params1.sort_order == "desc"
+    assert params1.filter_by == "name"
+    assert params1.filter_value == "test"
 
     # Test default values
-    params = SortFilterParams[Item]()
-    assert params.sort_by is None
-    assert params.sort_order is None
-    assert params.filter_by is None
-    assert params.filter_value is None
+    params2 = SortFilterParams[Item]()
+    assert params2.sort_by is None
+    assert params2.sort_order is None
+    assert params2.filter_by is None
+    assert params2.filter_value is None
 
     # Test sort validation still works
     with pytest.raises(
@@ -372,7 +372,9 @@ async def test_field_type_validation():
         )  # tries to coerce to int, but fails
 
     # Test that valid type works
-    params = PageSortFilterParams[Item](
+    params = PageSortFilterParams[
+        Item
+    ](
         filter_by="value", filter_value="42"
     )  # in fact it should be an int but it comes as a string anyways from the request. the type is enforced by the model validator
     assert params.filter_value == 42
@@ -437,9 +439,13 @@ async def test_sort_params_invalid_order_validation():
     # Create a SortParams instance and manually call _validate_sort
     params = SortParams[Item]()
     params.sort_by = "name"
-    params.sort_order = "invalid_order"  # This will pass Pydantic validation but fail internal validation
+    params.sort_order = "invalid_order"  # type: ignore[assignment]
+    # This will pass Pydantic validation but fail internal validation
 
-    with pytest.raises(ValueError, match="Invalid order: 'invalid_order' — must be one of: \\['asc', 'desc'\\]"):
+    with pytest.raises(
+        ValueError,
+        match="Invalid order: 'invalid_order' — must be one of: \\['asc', 'desc'\\]",
+    ):
         params._validate_sort()
 
 

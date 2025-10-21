@@ -15,7 +15,6 @@ from .metrics import (
 
 class PrometheusMiddleware(_starlette_middleware_base.BaseHTTPMiddleware):
     async def dispatch(self, request: _fastapi.Request, call_next):
-
         if "authorization" in request.headers:
             auth_type = (
                 request.headers["authorization"].split()[0]

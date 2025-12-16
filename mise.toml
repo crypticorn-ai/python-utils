@@ -1,5 +1,5 @@
 [tools]
-uv = "0.9.4"
+uv = "0.9.9"
 
 [env]
 _.python.venv = { path = ".venv" }
@@ -9,7 +9,7 @@ run = "uvx pre-commit run --all-files"
 description = "Run pre-commit hooks"
 
 [tasks.test]
-run = "uv run pytest tests/ -v"
+run = "uv run pytest tests/"
 description = "Run tests with pytest"
 
 [tasks."test:cov"]
@@ -24,6 +24,10 @@ description = "Install dependencies (alias: 'i')"
 [tasks."install:upgrade"]
 run = "uv sync --upgrade"
 description = "Upgrade dependencies in the allowed ranges"
+
+[tasks."install:check"]
+run = "uv tree --outdated --depth 1"
+description = "Check dependencies for updates"
 
 [tasks.setup]
 run = ["mise install", "uvx pre-commit install"]

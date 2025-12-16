@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 env:
-  API_ENV: ${{ (github.ref == 'refs/heads/v0' || github.ref == 'refs/heads/v1' || github.ref == 'refs/heads/v2') && 'prod' || 'dev' }}
+  API_ENV: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') && 'prod' || 'dev' }}
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:

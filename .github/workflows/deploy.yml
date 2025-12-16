@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: Test and Coverage # only run if the test and coverage workflow has completed successfully
     types: [completed]
-    branches: [v2-dev, v2]
+    branches: [dev, main]
 
 jobs:
   release:
